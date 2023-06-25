@@ -2,7 +2,7 @@
 <html>
 <head>
     <!--create title shown in tab; not the same as header on webpage-->
-    <title>Heartbeat counting task</title>
+    <title>PrimalsInteroception</title>
 
     <script src="utils/jspsych/jspsych.js"></script>
 
@@ -49,6 +49,7 @@
     }
 
     var jsPsych = initJsPsych({
+        show_progress_bar: true,
         on_finish: function() {
             jsPsych.data.displayData();
         }
@@ -121,6 +122,7 @@ for (let i = 0; i < shuffledTaskOrder.length; i++) {
         var instructions = {
             type: jsPsychHtmlButtonResponse,
             stimulus:
+                "<h2>Heartbeat Counting Task</h2>" +
                 "<p><b>Instructions</b></p>" +
                 // Don't give exact time so that participants don't count
                 "<p>A total of 6 trials on the heartbeat counting task are about to start.</p>" +
@@ -280,6 +282,7 @@ timeline.push({
             questions: questions,
             randomize_question_order: true,
             preamble:
+                "<h2>Interoceptive Awareness Scale</h2>" +
                 "<p>Below are several statements regarding how accurately you can perceive specific bodily sensations. Please rate on the scale how well you believe you can perceive each specific signal.</p>" +
                 "<p>For example, if you often feel you need to urinate and then realise you do not need to when you go to the toilet you would rate your accuracy perceiving this bodily signal as low.</p>" +
                 "<p>Please only rate how well you can perceive these signals without using external cues, for example, if you can only perceive how fast your heart is beating when you measure it by taking your pulse this would not count as accurate internal perception.</p><br /><br/> ",
@@ -312,6 +315,7 @@ timeline.push({
             questions: questions,
             randomize_question_order: true,
             preamble:
+                "<h2>Multidimensional Assessment of Interoceptive Awareness</h2>" +
                 "<p>Below you will find a list of statements.</p>" +
                 "<p>Please indicate how often each statement applies to you generally in daily life.</p><br /><br/> ",
             require_movement: questions_required,
@@ -327,39 +331,46 @@ timeline.push({
 
   } else if (task === "PI99") {
 
-        // PI-99 Questions
-        var scale = ["Strongly Disagree", "Strongly Agree"]
-        var questions = []
-        for (const [index, element] of items3.entries()) {
-            questions.push({
-                prompt: "<b>" + element + "</b>",
-                name: dimensions3[index],
-                ticks: scale,
-                required: questions_required,
-            })
-        }
+// PI-99 Questions
+var scale = ["Strongly Disagree", "Strongly Agree"];
+var questions = [];
+var questionsPerPage = 33; // Number of questions per page
+var totalPages = Math.ceil(items3.length / questionsPerPage); // Total number of pages
 
-        var questionnaire = {
-            type: jsPsychMultipleSlider, 
-            questions: questions,
-            randomize_question_order: true,
-            preamble:
-                "<p>Below are very general statements about the world—not the world we wish we lived in, but the actual world as it is now.</p>" +
-                "<p>Please share your sense of agreement or disagreement.</p>" +
-                "<p>When in doubt, go with what initially feels true of the real world.</p>" +
-                "<p>There are no wrong answers. There is no need to overthink.</p><br /><br/> ",
-                require_movement: questions_required,
-            slider_width: null,
-            min: 0,
-            max: 1,
-            slider_start: 0.5,
-            data: {
-                screen: "questionnaire",
-            },
-        }
-        timeline.push(questionnaire)
-  }
-}
+for (const [index, element] of items3.entries()) {
+  questions.push({
+    prompt: "<b>" + element + "</b>",
+    name: dimensions3[index],
+    ticks: scale,
+    required: questions_required,
+  });
+
+  // Check if the current page is full or if it's the last page
+  if (questions.length === questionsPerPage || index === items3.length - 1) {
+    var pageNumber = Math.floor(index / questionsPerPage) + 1; // Current page number
+
+    var questionnaire = {
+      type: jsPsychMultipleSlider,
+      questions: questions,
+      randomize_question_order: true,
+      preamble:
+        "<h2>Primals Inventory (Page " + pageNumber + "/" + totalPages + ")</h2>" +
+        "<p>Below are very general statements about the world—not the world we wish we lived in, but the actual world as it is now.</p>" +
+        "<p>Please share your sense of agreement or disagreement.</p>" +
+        "<p>When in doubt, go with what initially feels true of the real world.</p>" +
+        "<p>There are no wrong answers. There is no need to overthink.</p><br /><br/> ",
+      require_movement: questions_required,
+      slider_width: null,
+      min: 0,
+      max: 1,
+      slider_start: 0.5,
+      data: {
+        screen: "questionnaire",
+      },
+    };
+    timeline.push(questionnaire);
+    questions = []; // Reset questions array for the next page
+  }}}}
 
     // Debriefing and exit fullscreen
     timeline.push({
