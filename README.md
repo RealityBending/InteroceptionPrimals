@@ -1,2 +1,2 @@
-# PrimalsInteroception
-Exploring the link between Interoception and Primal Beliefs
+# Primals World Beliefs and Interoception
+*Exploring the link between Interoception and Primal World Beliefs*
