@@ -1,6 +1,8 @@
 // experiment version
 version = "1.0"
 // Resting state duration in min
+duratio = [10]
+// HBC duration in sec
 duration = [5, 5, 5, 1, 1, 1];
 // [x, y, width, height] in pixels. Set to [0, 0, 0, 0] to disable.
 marker_position = [0, 37, 300, 300]
