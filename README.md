@@ -4,5 +4,5 @@
 
 This study is part of a [*Sussex Junior Research Assistant*](https://realitybending.github.io/jobs/assistant/) project led by [Jing Xu](https://github.com/JingxiongXu).
 
-- [**Try the Experiment (HBC version)**](https://realitybending.github.io/PrimalsInteroception/experiment/TaskFirst.html)
-- [**Try the Experiment (Interoception version)**](https://realitybending.github.io/PrimalsInteroception/experiment/QuestionnaireFirst.html)
+- [**Try the Experiment (HBC first version)**](https://realitybending.github.io/PrimalsInteroception/experiment/TaskFirst.html)
+- [**Try the Experiment (Interoception first version)**](https://realitybending.github.io/PrimalsInteroception/experiment/QuestionnaireFirst.html)
