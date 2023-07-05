@@ -12,6 +12,57 @@ record_webcam = false
 questions_required = false
 // Display raw data
 raw_data = false
+// Resting state questionnaire 
+var items = [
+    "I had busy thoughts",
+    "I had rapidly switching thoughts",
+    "I had difficulty holding onto my thoughts",
+    "I thought about others",
+    "I thought about people I like",
+    "I placed myself in other people's shoes",
+    "I thought about my feelings",
+    "I thought about my behaviour",
+    "I thought about myself",
+    "I thought about things I need to do",
+    "I thought about solving problems",
+    "I thought about the future",
+    "I felt sleepy",
+    "I felt tired",
+    "I had difficulty staying awake",
+    "I felt comfortable",
+    "I felt happy",
+    "I felt relaxed",
+    "I was conscious of my body",
+    "I thought about my heartbeat",
+    "I thought about my breathing",
+]
+var dimensions = [
+    "DoM_1",
+    "DoM_2",
+    "DoM_3",
+    "ToM_1",
+    "ToM_2",
+    "ToM_3",
+    "Self_1",
+    "Self_2",
+    "Self_3",
+    "Plan_1",
+    "Plan_2",
+    "Plan_3",
+    "Sleep_1",
+    "Sleep_2",
+    "Sleep_3",
+    "Comfort_1",
+    "Comfort_2",
+    "Comfort_3",
+    "SomA_1",
+    "SomA_2",
+    "SomA_3",
+]
+var check_items = [
+    "I had my eyes closed",
+    "I was able to rate the statements above",
+]
 // IAS questionnaire
 var items1 = [
     "I can always accurately perceive when my heart is beating fast",
