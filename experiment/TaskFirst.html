@@ -185,6 +185,47 @@
             choices: ["Continue"],
         }
         timeline.push(audio_trigger)
+
+        //Questions
+        var scale = ["Completely Disagree", "Completely Agree"]
+        var questions = []
+        for (const [index, element] of items.entries()) {
+            questions.push({
+                prompt: "<b>" + element + "</b>",
+                name: dimensions[index],
+                ticks: scale,
+                required: questions_required,
+            })
+        }
+        questions = jsPsych.randomization.shuffle(questions)
+
+        // Add validation check items
+        for (const [index, element] of check_items.entries()) {
+            questions.push({
+                prompt: "<b>" + element + "</b>",
+                name: "Check_" + (index + 1),
+                ticks: scale,
+                required: questions_required,
+            })
+        }
+
+        var questionnaire = {
+            type: jsPsychMultipleSlider,
+            questions: questions,
+            randomize_question_order: false,
+            preamble:
+                "<p>We are interested in the potential feelings and thoughts you may have experienced during the resting period.</p>" +
+                "<p>Please indicate the extent to which you agree with each statement.</p><br /><br/> ",
+            require_movement: questions_required,
+            slider_width: null,
+            min: 0,
+            max: 1,
+            slider_start: 0.5,
+            data: {
+                screen: "questionnaire",
+            },
+        }
+        timeline.push(questionnaire)
         
                 /* ----------------- HBC First----------------- */
                 // Instructions
