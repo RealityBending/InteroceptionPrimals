@@ -3,7 +3,7 @@ version = "1.0"
 // Resting state duration in min
 duratio = [10]
 // HBC duration in sec
-duration = [5, 5, 5, 1, 1, 1];
+duration = [25, 35, 45, 20, 30, 40];
 // [x, y, width, height] in pixels. Set to [0, 0, 0, 0] to disable.
 marker_position = [0, 37, 300, 300]
 // Record webcam?
