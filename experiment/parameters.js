@@ -5,7 +5,7 @@ duratio = [10]
 // HBC duration in sec
 duration = [25, 35, 45, 20, 30, 40];
 // [x, y, width, height] in pixels. Set to [0, 0, 0, 0] to disable.
-marker_position = [0, 37, 300, 300]
+marker_position = [0, 37, 250, 250]
 // Record webcam?
 record_webcam = false
 // Are all the questions from the debriefing required?
