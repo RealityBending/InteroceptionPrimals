@@ -27,7 +27,6 @@
         .jspsych-content {
             max-width: 100%;
         }
-
     </style>
 </head>
 
@@ -176,10 +175,10 @@
     }
     timeline.push(instructions)
 
-    function create_marker(marker_position, color = "black") {
-        const html = `<div id="marker" style="position: absolute; background-color: ${color};\
-        left:${marker_position[0]}px; top:${marker_position[1]}px; \
-        width:${marker_position[2]}px; height:${marker_position[3]}px";></div>`
+    function create_marker(marker1, color = "black") {
+        const html = `<div id="marker1" style="position: absolute; background-color: ${color};\
+        left:${marker1[0]}px; top:${marker1[1]}px; \
+        width:${marker1[2]}px; height:${marker1[3]}px";></div>`
         document.querySelector("body").insertAdjacentHTML("beforeend", html)
     }
 
@@ -189,10 +188,10 @@
         on_start: function () {
             document.body.style.backgroundColor = "#808080"
             document.body.style.cursor = "none"
-            create_marker(marker_position, (color = "white"))
+            create_marker(marker1, (color = "white"))
         },
         on_finish: function () {
-            document.querySelector("#marker").remove()
+            document.querySelector("#marker1").remove()
         },
         stimulus: "",
         choices: ["s"],
@@ -206,7 +205,7 @@
         type: jsPsychHtmlKeyboardResponse,
         extensions: extensions,
         on_load: function () {
-            create_marker(marker_position)
+            create_marker(marker1)
         },
         stimulus: "<p style='font-size:150px;'>+</p>",
         choices: ["s"],
@@ -219,7 +218,7 @@
             },
         },
         on_finish: function (data) {
-            document.querySelector("#marker").remove()
+            document.querySelector("#marker1").remove()
             data.duration =
                 (performance.now() - data.time_start) / 1000 / 60
         },
@@ -406,6 +405,14 @@
     }
 
     /* ----------------- HBT----------------- */
+    // Marker to cover the progress bar
+    function create_marker_2(marker2, color = "white") {
+        const html = `<div id="marker2" style="position: absolute; background-color: ${color};\
+        left:${marker2[0]}px; top:${marker2[1]}px; \
+        width:${marker2[2]}px; height:${marker2[3]}px";></div>`
+        document.querySelector("body").insertAdjacentHTML("beforeend", html)
+    }
+
     // Instructions
     var instructions = {
         type: jsPsychHtmlButtonResponse,
@@ -429,10 +436,12 @@
             choices: [' '], // Only the spacebar option          
             extensions: extensions,
             on_load: function () {
-                create_marker(marker_position);
+                create_marker(marker1);
+                create_marker_2(marker2);
             },
             on_finish: function (data) {
-                document.querySelector("#marker").remove();
+                document.querySelector("#marker1").remove();
+                document.querySelector("#marker2").remove();
             },
         };
         timeline.push(tap);
@@ -532,15 +541,6 @@
     }
     timeline.push(instructions)
 
-    function create_marker(marker_position, color = "black") {
-        const html = `<div id="marker" style="position: absolute; background-color: ${color};\
-    left:${marker_position[0]}px; top:${marker_position[1]}px; \
-    width:${marker_position[2]}px; height:${marker_position[3]}px";></div>`
-        document
-            .querySelector("body")
-            .insertAdjacentHTML("beforeend", html)
-    }
-
     // Define the question texts
     var question1 =
         "Enter how many heartbeats you counted <b>during the last trial</b>:"
@@ -572,10 +572,10 @@
             on_start: function () {
                 document.body.style.backgroundColor = "#808080"
                 document.body.style.cursor = "none"
-                create_marker(marker_position, (color = "white"))
+                create_marker(marker1, (color = "white"))
             },
             on_finish: function () {
-                document.querySelector("#marker").remove()
+                document.querySelector("#marker1").remove()
                 jsPsych.finishTrial() // Explicitly advance to the next trial
             },
             stimulus: function () {
@@ -610,7 +610,7 @@
             type: jsPsychHtmlKeyboardResponse,
             extensions: extensions,
             on_load: function () {
-                create_marker(marker_position)
+                create_marker(marker1)
             },
             stimulus: "<p style='font-size:150px;'>+</p>",
             choices: ["s"],
@@ -623,7 +623,7 @@
                 },
             },
             on_finish: function (data) {
-                document.querySelector("#marker").remove()
+                document.querySelector("#marker1").remove()
                 data.duration =
                     (performance.now() - data.time_start) /
                     1000 /
