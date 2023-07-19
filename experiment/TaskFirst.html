@@ -291,7 +291,7 @@
     /* ----------------- HBT----------------- */
     // Instructions
     var instructions = {
-        type: jsPsychHtmlButtonResponse,
+        type: jsPsychHtmlKeyboardResponse,
         stimulus:
             "<h2>Tapping Task</h2>" +
             "<p><b>Instructions</b></p>" +
@@ -310,7 +310,7 @@
         var tap = {
             type: jsPsychHtmlKeyboardResponse,
             stimulus: '<p style="font-size:48px; color:black;">[SPACE]</p>',
-            choices: [' '], // Only the spacebar option          
+            choices: [' '],       
             extensions: extensions,
             on_load: function () {
                 create_marker(marker1);
