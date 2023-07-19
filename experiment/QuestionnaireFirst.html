@@ -182,6 +182,14 @@
         document.querySelector("body").insertAdjacentHTML("beforeend", html)
     }
 
+    // Marker to cover the progress bar
+    function create_marker_2(marker2, color = "white") {
+        const html = `<div id="marker2" style="position: absolute; background-color: ${color};\
+        left:${marker2[0]}px; top:${marker2[1]}px; \
+        width:${marker2[2]}px; height:${marker2[3]}px";></div>`
+        document.querySelector("body").insertAdjacentHTML("beforeend", html)
+    }
+
     // Create blank grey screen just before rest period
     var buffer = {
         type: jsPsychHtmlKeyboardResponse,
@@ -205,7 +213,8 @@
         type: jsPsychHtmlKeyboardResponse,
         extensions: extensions,
         on_load: function () {
-            create_marker(marker1)
+            create_marker(marker1);
+            create_marker_2(marker2);
         },
         stimulus: "<p style='font-size:150px;'>+</p>",
         choices: ["s"],
@@ -218,7 +227,8 @@
             },
         },
         on_finish: function (data) {
-            document.querySelector("#marker1").remove()
+            document.querySelector("#marker1").remove();
+            document.querySelector("#marker2").remove();
             data.duration =
                 (performance.now() - data.time_start) / 1000 / 60
         },
@@ -405,35 +415,27 @@
     }
 
     /* ----------------- HBT----------------- */
-    // Marker to cover the progress bar
-    function create_marker_2(marker2, color = "white") {
-        const html = `<div id="marker2" style="position: absolute; background-color: ${color};\
-        left:${marker2[0]}px; top:${marker2[1]}px; \
-        width:${marker2[2]}px; height:${marker2[3]}px";></div>`
-        document.querySelector("body").insertAdjacentHTML("beforeend", html)
-    }
-
     // Instructions
     var instructions = {
-        type: jsPsychHtmlButtonResponse,
+        type: jsPsychHtmlKeyboardResponse,
         stimulus:
             "<h2>Tapping Task</h2>" +
             "<p><b>Instructions</b></p>" +
             "<p>In the following task, you will need to tap the spacebar with any rhythm you prefer.</p>" +
-            "<p>Please <b>maintain the speed of tapping</b> until the first trial is over.</p>",
-        choices: ["I am ready"],
+            "<p>Please <b>maintain the speed of tapping</b> until the first trial is over.</p>" +
+            "<p>Press the space bar to begin.</p>",
     };
     timeline.push(instructions);
 
     // Define the question text
     var tapquestion =
-        "Have you followed any stimulus while tapping (music, heartbeat, respiration, surrounding noise, etc.)?</b>"
+        "Have you followed any stimulus while tapping (music, surrounding noise, internal sensations...)?</b>"
 
     function createTrial() {
         var tap = {
             type: jsPsychHtmlKeyboardResponse,
             stimulus: '<p style="font-size:48px; color:black;">[SPACE]</p>',
-            choices: [' '], // Only the spacebar option          
+            choices: [' '],
             extensions: extensions,
             on_load: function () {
                 create_marker(marker1);
@@ -454,22 +456,7 @@
     }
 
     // Generate first trial
-    generateTrials(30);
-
-    // Add the tap question
-    timeline.push({
-        type: jsPsychSurveyText,
-        questions: [
-            {
-                prompt: tapquestion,
-                placeholder: "Enter your answer here",
-                name: "tap_question_1_response",
-            },
-        ],
-        data: {
-            screen: "tap1",
-        },
-    })
+    generateTrials(60);
 
     // Insert a break
     var breakTrial = {
@@ -481,22 +468,7 @@
     timeline.push(breakTrial);
 
     // Generate another trial
-    generateTrials(30);
-
-    // Add the tap question
-    timeline.push({
-        type: jsPsychSurveyText,
-        questions: [
-            {
-                prompt: tapquestion,
-                placeholder: "Enter your answer here",
-                name: "tap_question_2_response",
-            },
-        ],
-        data: {
-            screen: "tap2",
-        },
-    })
+    generateTrials(60);
 
     // Insert a break
     var breakTrial = {
@@ -508,7 +480,7 @@
     timeline.push(breakTrial);
 
     // Generate another trial
-    generateTrials(30);
+    generateTrials(60);
 
     // Add the tap question
     timeline.push({
@@ -517,11 +489,11 @@
             {
                 prompt: tapquestion,
                 placeholder: "Enter your answer here",
-                name: "tap_question_3_response",
+                name: "tap_question_response",
             },
         ],
         data: {
-            screen: "tap3",
+            screen: "tapq",
         },
     })
 
