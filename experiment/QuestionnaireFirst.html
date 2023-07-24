@@ -167,7 +167,7 @@
         stimulus:
             "<p><b>Instructions</b></p>" +
             // Don't give exact time so that participants don't count
-            "<p>A rest period of about 10 minutes is about to start.</p>" +
+            "<p>A rest period of about 8 minutes is about to start.</p>" +
             "<p>Simply <b>relax</b> and remain seated quietly with your eyes closed. Please try <b>not to fall asleep</b>.</p> " +
             "<p>Once the resting period is over, you will hear a beep. You can then open your eyes and proceed.</p>" +
             "<p>Once you are ready, close your eyes. The rest period will shortly begin.</p>",
@@ -473,7 +473,7 @@
     // Insert a break
     var breakTrial = {
         type: jsPsychHtmlKeyboardResponse,
-        stimulus: "<p>Well done, now tap with a <b>faster</b> rhythm.</p>" +
+        stimulus: "<p>Well done, now tap with a <b>faster</b> rhythm (faster than the first trial).</p>" +
             "<p>Please <b>maintain the speed of tapping</b> until the third trial is over.</p>" +
             "<p>Press any key to continue.</p>"
     };
@@ -512,12 +512,6 @@
         choices: ["I am ready"],
     }
     timeline.push(instructions)
-
-    // Define the question texts
-    var question1 =
-        "Enter how many heartbeats you counted <b>during the last trial</b>:"
-    var question2 =
-        "Enter how confident were you with your <b>heartbeat counting</b>:"
 
     // Create an array to store the trial order
     var trialOrder = []
@@ -589,7 +583,7 @@
             trial_duration: duration[trialIndex] * 1000,
             css_classes: ["fixation"],
             data: {
-                screen: "resting",
+                screen: "hct_interval",
                 time_start: function () {
                     return performance.now()
                 },
@@ -621,33 +615,32 @@
             type: jsPsychSurveyText,
             questions: [
                 {
-                    prompt: question1,
-                    placeholder: "Heartbeats counted",
-                    name: "question1_response",
+                    prompt: "<b>How many heartbeats did you count?</b>:",
+                    placeholder: "Enter number",
+                    name: "hct_count",
                 },
             ],
             data: {
-                screen: "hbc1",
+                screen: "hct_count",
             },
         })
 
         // Add the second question as jsPsychMultipleSlider
-        var scale = ["Not confident at all", "Totally confident"]
         timeline.push({
             type: jsPsychMultipleSlider,
             questions: [
                 {
-                    prompt: question2,
-                    name: "question2_response",
+                    prompt: "<b>How confident are you that this number is correct?</b>:",
+                    name: "hct_confidence",
                     min: 0,
-                    max: 100,
-                    slider_start: 50,
-                    ticks: scale,
+                    max: 1,
+                    slider_start: 0.5,
+                    ticks: ["Not confident", "Very confident"],
                     required: true,
                 },
             ],
             data: {
-                screen: "hbc2",
+                screen: "hct_confidence",
             },
         })
     }
