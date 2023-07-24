@@ -309,7 +309,7 @@
         var tap = {
             type: jsPsychHtmlKeyboardResponse,
             stimulus: '<p style="font-size:48px; color:black;">[SPACE]</p>',
-            choices: [' '],       
+            choices: [' '],
             extensions: extensions,
             on_load: function () {
                 create_marker(marker1);
@@ -387,12 +387,6 @@
     }
     timeline.push(instructions)
 
-    // Define the question texts
-    var question1 =
-        "Enter how many heartbeats you counted <b>during the last trial</b>:"
-    var question2 =
-        "Enter how confident were you with your <b>heartbeat counting</b>:"
-
     // Create an array to store the trial order
     var trialOrder = []
 
@@ -463,7 +457,7 @@
             trial_duration: duration[trialIndex] * 1000,
             css_classes: ["fixation"],
             data: {
-                screen: "resting",
+                screen: "hct_interval",
                 time_start: function () {
                     return performance.now()
                 },
@@ -495,33 +489,32 @@
             type: jsPsychSurveyText,
             questions: [
                 {
-                    prompt: question1,
-                    placeholder: "Heartbeats counted",
-                    name: "question1_response",
+                    prompt: "<b>How many heartbeats did you count?</b>:",
+                    placeholder: "Enter number",
+                    name: "hct_count",
                 },
             ],
             data: {
-                screen: "hbc1",
+                screen: "hct_count",
             },
         })
 
         // Add the second question as jsPsychMultipleSlider
-        var scale = ["Not confident at all", "Totally confident"]
         timeline.push({
             type: jsPsychMultipleSlider,
             questions: [
                 {
-                    prompt: question2,
-                    name: "question2_response",
+                    prompt: "<b>How confident are you that this number is correct?</b>:",
+                    name: "hct_confidence",
                     min: 0,
-                    max: 100,
-                    slider_start: 50,
-                    ticks: scale,
+                    max: 1,
+                    slider_start: 0.5,
+                    ticks: ["Not confident", "Very confident"],
                     required: true,
                 },
             ],
             data: {
-                screen: "hbc2",
+                screen: "hct_confidence",
             },
         })
     }
