@@ -8,26 +8,46 @@ var TAP_instructions = {
 }
 
 var TAP_break1 = {
-    type: jsPsychHtmlKeyboardResponse,
+    type: jsPsychHtmlButtonResponse,
     stimulus:
         "<p>Well done! Now tap with a <b>slower</b> rhythm.</p>" +
         "<p>Please <b>maintain the speed of tapping</b> until the second trial is over.</p>" +
-        "<p>Press the space bar to begin.</p>",
+        "<p>Press the button below to begin.</p>",
+    choices: ["I'm ready"],
 }
 
 var TAP_break2 = {
-    type: jsPsychHtmlKeyboardResponse,
+    type: jsPsychHtmlButtonResponse,
     stimulus:
         "<p>Well done! This time tap with a <b>faster</b> rhythm than the first time.</p>" +
         "<p>Please <b>maintain the speed of tapping</b> until the third trial is over.</p>" +
-        "<p>Press the space bar to begin.</p>",
+        "<p>Press the button below to begin.</p>",
+    choices: ["I'm ready"],
+}
+
+var TAP_influenced = {
+    type: jsPsychMultipleSlider,
+    questions: [
+        {
+            prompt: "<b>To what extent do you think your tapping rhythm was influenced by other things than your own will?</b>",
+            name: "tap_influenced",
+            min: 0,
+            max: 100,
+            slider_start: 50,
+            ticks: ["Not influenced", "Totally influenced"],
+            required: true,
+        },
+    ],
+    data: {
+        screen: "TAP_influenced",
+    },
 }
 
 var TAP_strategy = {
     type: jsPsychSurveyText,
     questions: [
         {
-            prompt: "Have you followed or been influenced by anything in particular while tapping (music, surrounding noise, internal sensations...)?</b>",
+            prompt: "<b>Have you followed or been influenced by anything in particular while tapping (music, surrounding noise, internal sensations...)?</b>",
             placeholder: "Enter your answer here",
             name: "tap_strategy",
         },
