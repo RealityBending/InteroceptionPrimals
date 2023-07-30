@@ -296,7 +296,7 @@
     timeline.push(TAP_instructions);
 
     // Insert trials
-    function createTrial(screen="TAP_1") {
+    function createTrial(screen = "TAP_1") {
         var tap = {
             type: jsPsychHtmlKeyboardResponse,
             stimulus: '<p style="font-size:48px; color:black;">[SPACE]</p>',
@@ -317,20 +317,21 @@
         timeline.push(tap);
     }
 
-    function generateTrials(numTrials, screen="TAP_1") {
+    function generateTrials(numTrials, screen = "TAP_1") {
         for (var i = 0; i < numTrials; i++) {
             createTrial(screen);
         }
     }
 
     // Insert trials and breaks
-    generateTrials(60, screen="TAP_1");
-    timeline.push(TAP_break1)  // Insert a break
-    generateTrials(60, screen="TAP_2");
-    timeline.push(TAP_break2);
-    generateTrials(60, screen="TAP_3");
+    generateTrials(60, screen = "TAP_1");
+    timeline.push(TAP_break1);  // Insert a break
+    generateTrials(60, screen = "TAP_2");
+    timeline.push(TAP_break2);  // Insert a break
+    generateTrials(60, screen = "TAP_3");
 
     // Debriefing questionnaire
+    timeline.push(TAP_influenced)
     timeline.push(TAP_strategy)
 
     /* ----------------- HBC ----------------- */
@@ -451,7 +452,7 @@
             type: jsPsychSurveyText,
             questions: [
                 {
-                    prompt: "<b>How many heartbeats did you count?</b>:",
+                    prompt: "<b>How many heartbeats did you count?</b>",
                     placeholder: "Enter number",
                     name: "hct_count",
                 },
@@ -466,7 +467,7 @@
             type: jsPsychMultipleSlider,
             questions: [
                 {
-                    prompt: "<b>How confident are you that this number is correct?</b>:",
+                    prompt: "<b>How confident are you that this number is correct?</b>",
                     name: "hct_confidence",
                     min: 0,
                     max: 100,
