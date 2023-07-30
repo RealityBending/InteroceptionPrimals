@@ -18,7 +18,10 @@
     <script src="utils/jspsych/plugin-survey-text.js"></script>
     <script src="utils/jspsych/extension-record-video.js"></script>
     <script src="utils/jspsych/plugin-initialize-camera.js"></script>
+
+    <!-- Load task specific code -->
     <script src="parameters.js"></script>
+    <script src="tapping.js"></script>
 
     <!-- Applying default style here -->
     <link href="utils/jspsych/jspsych.css" rel="stylesheet" type="text/css" />
@@ -414,24 +417,12 @@
         }
     }
 
-    /* ----------------- HBT----------------- */
+    /* ----------------- Tapping----------------- */
     // Instructions
-    var instructions = {
-        type: jsPsychHtmlKeyboardResponse,
-        stimulus:
-            "<h2>Tapping Task</h2>" +
-            "<p><b>Instructions</b></p>" +
-            "<p>In the following task, you will need to tap the spacebar with any rhythm you prefer.</p>" +
-            "<p>Please <b>maintain the speed of tapping</b> until the first trial is over.</p>" +
-            "<p>Press the space bar to begin.</p>",
-    };
-    timeline.push(instructions);
+    timeline.push(TAP_instructions);
 
-    // Define the question text
-    var tapquestion =
-        "Have you followed any stimulus while tapping (music, surrounding noise, internal sensations...)?</b>"
-
-    function createTrial() {
+    // Insert trials
+    function createTrial(screen = "TAP_1") {
         var tap = {
             type: jsPsychHtmlKeyboardResponse,
             stimulus: '<p style="font-size:48px; color:black;">[SPACE]</p>',
@@ -445,57 +436,29 @@
                 document.querySelector("#marker1").remove();
                 document.querySelector("#marker2").remove();
             },
+            data: {
+                screen: screen,
+            },
         };
         timeline.push(tap);
     }
 
-    function generateTrials(numTrials) {
+    function generateTrials(numTrials, screen = "TAP_1") {
         for (var i = 0; i < numTrials; i++) {
-            createTrial();
+            createTrial(screen);
         }
     }
 
-    // Generate first trial
-    generateTrials(60);
+    // Insert trials and breaks
+    generateTrials(60, screen = "TAP_1");
+    timeline.push(TAP_break1);  // Insert a break
+    generateTrials(60, screen = "TAP_2");
+    timeline.push(TAP_break2);  // Insert a break
+    generateTrials(60, screen = "TAP_3");
 
-    // Insert a break
-    var breakTrial = {
-        type: jsPsychHtmlKeyboardResponse,
-        stimulus: "<p>Well done, now tap with a <b>slower</b> rhythm.</p>" +
-            "<p>Please <b>maintain the speed of tapping</b> until the second trial is over.</p>" +
-            "<p>Press any key to continue.</p>"
-    };
-    timeline.push(breakTrial);
-
-    // Generate another trial
-    generateTrials(60);
-
-    // Insert a break
-    var breakTrial = {
-        type: jsPsychHtmlKeyboardResponse,
-        stimulus: "<p>Well done, now tap with a <b>faster</b> rhythm (faster than the first trial).</p>" +
-            "<p>Please <b>maintain the speed of tapping</b> until the third trial is over.</p>" +
-            "<p>Press any key to continue.</p>"
-    };
-    timeline.push(breakTrial);
-
-    // Generate another trial
-    generateTrials(60);
-
-    // Add the tap question
-    timeline.push({
-        type: jsPsychSurveyText,
-        questions: [
-            {
-                prompt: tapquestion,
-                placeholder: "Enter your answer here",
-                name: "tap_question_response",
-            },
-        ],
-        data: {
-            screen: "tapq",
-        },
-    })
+    // Debriefing questionnaire
+    timeline.push(TAP_influenced)
+    timeline.push(TAP_strategy)
 
     /* ----------------- HBC ----------------- */
     // Instructions
@@ -615,7 +578,7 @@
             type: jsPsychSurveyText,
             questions: [
                 {
-                    prompt: "<b>How many heartbeats did you count?</b>:",
+                    prompt: "<b>How many heartbeats did you count?</b>",
                     placeholder: "Enter number",
                     name: "hct_count",
                 },
@@ -630,7 +593,7 @@
             type: jsPsychMultipleSlider,
             questions: [
                 {
-                    prompt: "<b>How confident are you that this number is correct?</b>:",
+                    prompt: "<b>How confident are you that this number is correct?</b>",
                     name: "hct_confidence",
                     min: 0,
                     max: 100,
