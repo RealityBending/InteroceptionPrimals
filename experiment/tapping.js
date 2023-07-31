@@ -57,3 +57,168 @@ var TAP_strategy = {
         screen: "TAP_strategy",
     },
 }
+
+function create_TAP_trial_1() {
+    timeline.push({
+        type: jsPsychHtmlKeyboardResponse,
+        extensions: extensions,
+        on_load: function () {
+            create_marker(marker1, (color = "white"))
+            create_marker_2(marker2);
+        },
+        stimulus: "Please continue tapping...",
+        choices: [" "],
+        css_classes: ["fixation"],
+        data: {
+            screen: "TAP_waiting_1",
+            time_start: function () {
+                return performance.now()
+            },
+        },
+        on_finish: function (data) {
+            document.querySelector("#marker1").remove()
+            document.querySelector("#marker2").remove()
+            data.duration =
+                (performance.now() - data.time_start) /
+                1000 /
+                60
+        },
+    })
+
+    timeline.push({
+        type: jsPsychHtmlKeyboardResponse,
+        extensions: extensions,
+        on_load: function () {
+            create_marker(marker1)
+            create_marker_2(marker2);
+        },
+        stimulus: "",
+        choices: "NO_KEYS",
+        trial_duration: 50,
+        css_classes: ["fixation"],
+        data: {
+            screen: "TAP_tapped_1",
+            time_start: function () {
+                return performance.now()
+            },
+        },
+        on_finish: function (data) {
+            document.querySelector("#marker1").remove()
+            document.querySelector("#marker2").remove()
+            data.duration =
+                (performance.now() - data.time_start) /
+                1000 /
+                60
+        },
+    })
+}
+
+function create_TAP_trial_2() {
+    timeline.push({
+        type: jsPsychHtmlKeyboardResponse,
+        extensions: extensions,
+        on_load: function () {
+            create_marker(marker1, (color = "white"))
+            create_marker_2(marker2);
+        },
+        stimulus: "Please continue tapping...",
+        choices: [" "],
+        css_classes: ["fixation"],
+        data: {
+            screen: "TAP_waiting_2",
+            time_start: function () {
+                return performance.now()
+            },
+        },
+        on_finish: function (data) {
+            document.querySelector("#marker1").remove()
+            document.querySelector("#marker2").remove()
+            data.duration =
+                (performance.now() - data.time_start) /
+                1000 /
+                60
+        },
+    })
+
+    timeline.push({
+        type: jsPsychHtmlKeyboardResponse,
+        extensions: extensions,
+        on_load: function () {
+            create_marker(marker1)
+            create_marker_2(marker2);
+        },
+        stimulus: "",
+        choices: "NO_KEYS",
+        trial_duration: 50,
+        css_classes: ["fixation"],
+        data: {
+            screen: "TAP_tapped_2",
+            time_start: function () {
+                return performance.now()
+            },
+        },
+        on_finish: function (data) {
+            document.querySelector("#marker1").remove()
+            document.querySelector("#marker2").remove()
+            data.duration =
+                (performance.now() - data.time_start) /
+                1000 /
+                60
+        },
+    })
+}
+
+function create_TAP_trial_3() {
+    timeline.push({
+        type: jsPsychHtmlKeyboardResponse,
+        extensions: extensions,
+        on_load: function () {
+            create_marker(marker1, (color = "white"))
+            create_marker_2(marker2);
+        },
+        stimulus: "Please continue tapping...",
+        choices: [" "],
+        css_classes: ["fixation"],
+        data: {
+            screen: "TAP_waiting_3",
+            time_start: function () {
+                return performance.now()
+            },
+        },
+        on_finish: function (data) {
+            document.querySelector("#marker1").remove()
+            document.querySelector("#marker2").remove()
+            data.duration =
+                (performance.now() - data.time_start) /
+                1000 /
+                60
+        },
+    })
+
+    timeline.push({
+        type: jsPsychHtmlKeyboardResponse,
+        extensions: extensions,
+        on_load: function () {
+            create_marker(marker1)
+            create_marker_2(marker2);
+        },
+        stimulus: "",
+        choices: "NO_KEYS",
+        trial_duration: 50,
+        css_classes: ["fixation"],
+        data: {
+            screen: "TAP_tapped_3",
+            time_start: function () {
+                return performance.now()
+            },
+        },
+        on_finish: function (data) {
+            document.querySelector("#marker1").remove()
+            document.querySelector("#marker2").remove()
+            data.duration =
+                (performance.now() - data.time_start) /
+                1000 /
+                60
+        },
+    })
+}
