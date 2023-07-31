@@ -21,7 +21,10 @@
 
     <!-- Load task specific code -->
     <script src="parameters.js"></script>
+    <script src="resting.js"></script>
     <script src="tapping.js"></script>
+    <script src="counting.js"></script>
+    <script src="questionnaires.js"></script>
 
     <!-- Applying default style here -->
     <link href="utils/jspsych/jspsych.css" rel="stylesheet" type="text/css" />
@@ -166,170 +169,40 @@
 
     /* ----------------- Resting State ----------------- */
     // Instructions
-    var instructions = {
-        type: jsPsychHtmlButtonResponse,
-        stimulus:
-            "<p><b>Instructions</b></p>" +
-            // Don't give exact time so that participants don't count
-            "<p>A rest period of about 8 minutes is about to start.</p>" +
-            "<p>Simply <b>relax</b> and remain seated quietly with your eyes closed. Please try <b>not to fall asleep</b>.</p> " +
-            "<p>Once the resting period is over, you will hear a beep. You can then open your eyes and proceed.</p>" +
-            "<p>Once you are ready, close your eyes. The rest period will shortly begin.</p>",
-        choices: ["Continue"],
-    }
-    timeline.push(instructions)
-
-    function create_marker(marker1, color = "black") {
-        const html = `<div id="marker1" style="position: absolute; background-color: ${color};\
-        left:${marker1[0]}px; top:${marker1[1]}px; \
-        width:${marker1[2]}px; height:${marker1[3]}px";></div>`
-        document.querySelector("body").insertAdjacentHTML("beforeend", html)
-    }
-
-    // Marker to cover the progress bar
-    function create_marker_2(marker2, color = "white") {
-        const html = `<div id="marker2" style="position: absolute; background-color: ${color};\
-        left:${marker2[0]}px; top:${marker2[1]}px; \
-        width:${marker2[2]}px; height:${marker2[3]}px";></div>`
-        document.querySelector("body").insertAdjacentHTML("beforeend", html)
-    }
+    timeline.push(RS_instructions)
 
     // Create blank grey screen just before rest period
-    var buffer = {
-        type: jsPsychHtmlKeyboardResponse,
-        on_start: function () {
-            document.body.style.backgroundColor = "#808080"
-            document.body.style.cursor = "none"
-            create_marker(marker1, (color = "white"))
-        },
-        on_finish: function () {
-            document.querySelector("#marker1").remove()
-        },
-        stimulus: "",
-        choices: ["s"],
-        trial_duration: 1000, // 1 second
-        css_classes: ["fixation"],
-    }
-    timeline.push(buffer)
+    timeline.push(RS_buffer)
 
     // Create blank grey screen for resting state
-    var rest = {
-        type: jsPsychHtmlKeyboardResponse,
-        extensions: extensions,
-        on_load: function () {
-            create_marker(marker1);
-            create_marker_2(marker2);
-        },
-        stimulus: "<p style='font-size:150px;'>+</p>",
-        choices: ["s"],
-        trial_duration: duratio * 60 * 1000,
-        css_classes: ["fixation"],
-        data: {
-            screen: "resting",
-            time_start: function () {
-                return performance.now()
-            },
-        },
-        on_finish: function (data) {
-            document.querySelector("#marker1").remove();
-            document.querySelector("#marker2").remove();
-            data.duration =
-                (performance.now() - data.time_start) / 1000 / 60
-        },
-    }
-    timeline.push(rest)
+    timeline.push(RS_task)
 
-    var audio_trigger = {
-        type: jsPsychAudioButtonResponse,
-        on_start: function () {
-            document.body.style.backgroundColor = "#FFFFFF"
-            document.body.style.cursor = "auto"
-        },
-        stimulus: beep,
-        prompt: "<p>It's over! Please press continue.</p>",
-        choices: ["Continue"],
-    }
-    timeline.push(audio_trigger)
+    // Play beep
+    timeline.push(RS_beep)
 
-    //questions
-    var scale = ["Completely Disagree", "Completely Agree"]
-    var questions = []
-    for (const [index, element] of items.entries()) {
-        questions.push({
-            prompt: "<b>" + element + "</b>",
-            name: dimensions[index],
-            ticks: scale,
-            required: questions_required,
-        })
-    }
-    questions = jsPsych.randomization.shuffle(questions)
-
-    // Add validation check items
-    for (const [index, element] of check_items.entries()) {
-        questions.push({
-            prompt: "<b>" + element + "</b>",
-            name: "Check_" + (index + 1),
-            ticks: scale,
-            required: questions_required,
-        })
-    }
-
-    var questionnaire = {
-        type: jsPsychMultipleSlider,
-        questions: questions,
-        randomize_question_order: false,
-        preamble:
-            "<p>We are interested in the potential feelings and thoughts you may have experienced during the resting period.</p>" +
-            "<p>Please indicate the extent to which you agree with each statement.</p><br /><br/> ",
-        require_movement: questions_required,
-        slider_width: null,
-        min: 0,
-        max: 1,
-        slider_start: 0.5,
-        data: {
-            screen: "rest",
-        },
-    }
-    timeline.push(questionnaire)
+    // Add debriefing questionnaire
+    timeline.push(RS_questionnaire)
 
     /* ----------------- Tapping----------------- */
     // Instructions
-    timeline.push(TAP_instructions);
-
-    // Insert trials
-    function createTrial(screen = "TAP_1") {
-        var tap = {
-            type: jsPsychHtmlKeyboardResponse,
-            stimulus: '<p style="font-size:48px; color:black;">[SPACE]</p>',
-            choices: [' '],
-            extensions: extensions,
-            on_load: function () {
-                create_marker(marker1);
-                create_marker_2(marker2);
-            },
-            on_finish: function (data) {
-                document.querySelector("#marker1").remove();
-                document.querySelector("#marker2").remove();
-            },
-            data: {
-                screen: screen,
-            },
-        };
-        timeline.push(tap);
-    }
-
-    function generateTrials(numTrials, screen = "TAP_1") {
-        for (var i = 0; i < numTrials; i++) {
-            createTrial(screen);
-        }
-    }
+    timeline.push(TAP_instructions)
 
     // Insert trials and breaks
-    generateTrials(60, screen = "TAP_1");
-    timeline.push(TAP_break1);  // Insert a break
-    generateTrials(60, screen = "TAP_2");
-    timeline.push(TAP_break2);  // Insert a break
-    generateTrials(60, screen = "TAP_3");
+    for (let i = 0; i < 60; i++) {
+        create_TAP_trial_1();
+    }
+
+    timeline.push(TAP_break1) // Insert a break
+
+    for (let i = 0; i < 60; i++) {
+        create_TAP_trial_2();
+    }
+
+    timeline.push(TAP_break2) // Insert a break
+
+    for (let i = 0; i < 60; i++) {
+        create_TAP_trial_3();
+    }
 
     // Debriefing questionnaire
     timeline.push(TAP_influenced)
@@ -337,280 +210,22 @@
 
     /* ----------------- HBC ----------------- */
     // Instructions
-    var instructions = {
-        type: jsPsychHtmlButtonResponse,
-        stimulus:
-            "<h2>Heartbeat Counting Task</h2>" +
-            "<p><b>Instructions</b></p>" +
-            // Don't give exact time so that participants don't count
-            "<p>In the following task, you will need to count and report the number of heartbeats during several intervals.</p>" +
-            "<p>Simply <b>relax</b> and remain seated quietly while <b>counting your heartbeat without physically measuring it</b>.</p> " +
-            "<p>The interval will start with a '3-2-1' signal, after which you need to count your heartbeats until you hear a beep.</p> " +
-            "<p>Questions will then be displayed for you to answer.</p>",
-        choices: ["I am ready"],
-    }
-    timeline.push(instructions)
+    timeline.push(HBC_instructions)
 
-    // Create an array to store the trial order
-    var trialOrder = []
+    // Full HBC
+    HBC()
 
-    // Populate the trial order array
-    for (let i = 0; i < duration.length; i++) {
-        trialOrder.push(i)
-    }
+    /* ----------------- Other Questionnaires ----------------- */
+    //ias
+    timeline.push(ias)
 
-    // Shuffle the trial order
-    var shuffledTrialOrder =
-        jsPsych.randomization.shuffle(trialOrder)
+    //maia-2
+    timeline.push(maia)
 
-    // Define the pause duration (in milliseconds)
-    var pauseDuration = 3000 // 3 seconds
+    //pi-99
+    timeline.push(pi99)
 
-    // Iterate through the shuffled trial order
-    for (let i = 0; i < shuffledTrialOrder.length; i++) {
-        var trialIndex = shuffledTrialOrder[i]
-
-        // Create blank grey screen with countdown just before each trial
-        var buffer = {
-            type: jsPsychHtmlKeyboardResponse,
-            on_start: function () {
-                document.body.style.backgroundColor = "#808080"
-                document.body.style.cursor = "none"
-                create_marker(marker1, (color = "white"))
-            },
-            on_finish: function () {
-                document.querySelector("#marker1").remove()
-                jsPsych.finishTrial() // Explicitly advance to the next trial
-            },
-            stimulus: function () {
-                var count = 3
-                var countdownHTML =
-                    '<p style="font-size: 100px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">' +
-                    count +
-                    "</p>"
-                var countdownInterval = setInterval(function () {
-                    count--
-                    if (count > 0) {
-                        document.querySelector(
-                            "#countdown"
-                        ).innerHTML = count
-                    } else {
-                        clearInterval(countdownInterval)
-                    }
-                }, 1000) // Update countdown every second
-                return (
-                    '<div id="countdown" style="font-size: 100px;">' +
-                    count +
-                    "</div>"
-                )
-            },
-            choices: "NO_KEYS",
-            trial_duration: pauseDuration, // Pause duration before the trial starts
-            css_classes: ["fixation"],
-        }
-        timeline.push(buffer)
-
-        timeline.push({
-            type: jsPsychHtmlKeyboardResponse,
-            extensions: extensions,
-            on_load: function () {
-                create_marker(marker1)
-            },
-            stimulus: "<p style='font-size:150px;'>+</p>",
-            choices: ["s"],
-            trial_duration: duration[trialIndex] * 1000,
-            css_classes: ["fixation"],
-            data: {
-                screen: "hct_interval",
-                time_start: function () {
-                    return performance.now()
-                },
-            },
-            on_finish: function (data) {
-                document.querySelector("#marker1").remove()
-                data.duration =
-                    (performance.now() - data.time_start) /
-                    1000 /
-                    60
-            },
-        })
-
-        // Beep after each trial
-        var audio_trigger = {
-            type: jsPsychAudioButtonResponse,
-            on_start: function () {
-                document.body.style.backgroundColor = "#FFFFFF"
-                document.body.style.cursor = "auto"
-            },
-            stimulus: beep,
-            prompt: "<p>This trial is over, please press continue.</p>",
-            choices: ["Continue"],
-        }
-        timeline.push(audio_trigger)
-
-        // Add the first question
-        timeline.push({
-            type: jsPsychSurveyText,
-            questions: [
-                {
-                    prompt: "<b>How many heartbeats did you count?</b>",
-                    placeholder: "Enter number",
-                    name: "hct_count",
-                },
-            ],
-            data: {
-                screen: "hct_count",
-            },
-        })
-
-        // Add the second question as jsPsychMultipleSlider
-        timeline.push({
-            type: jsPsychMultipleSlider,
-            questions: [
-                {
-                    prompt: "<b>How confident are you that this number is correct?</b>",
-                    name: "hct_confidence",
-                    min: 0,
-                    max: 1,
-                    step: 0.01,
-                    slider_start: 0.5,
-                    ticks: ["Not confident", "Very confident"],
-                    required: true,
-                },
-            ],
-            data: {
-                screen: "hct_confidence",
-            },
-        })
-    }
-
-    /* ----------------- Start Of Other Questionnaires ----------------- */
-    // Create an array to store the task order
-    var taskOrder = ["IAS", "MAIA", "PI99"]
-
-    // Shuffle the task order
-    var shuffledTaskOrder = jsPsych.randomization.shuffle(taskOrder)
-
-    // Iterate through the shuffled task order
-    for (let i = 0; i < shuffledTaskOrder.length; i++) {
-        var task = shuffledTaskOrder[i]
-
-        if (task === "IAS") {
-            // IAS Questions
-            var scale = ["Strongly Disagree", "Strongly Agree"]
-            var questions = []
-            for (const [index, element] of items1.entries()) {
-                questions.push({
-                    prompt: "<b>" + element + "</b>",
-                    name: dimensions1[index],
-                    ticks: scale,
-                    required: questions_required,
-                })
-            }
-
-            var ias = {
-                type: jsPsychMultipleSlider,
-                questions: questions,
-                randomize_question_order: true,
-                preamble:
-                    "<h2>About your body sensations...</h2>" +
-                    "<p>Below are several statements regarding how accurately you can perceive specific bodily sensations. Please rate on the scale how well you believe you can perceive each specific signal.</p>" +
-                    "<p>For example, if you often feel you need to urinate and then realise you do not need to when you go to the toilet you would rate your accuracy perceiving this bodily signal as low.</p>" +
-                    "<p>Please only rate how well you can perceive these signals without using external cues, for example, if you can only perceive how fast your heart is beating when you measure it by taking your pulse this would not count as accurate internal perception.</p><br /><br/> ",
-                require_movement: questions_required,
-                slider_width: null,
-                min: 0,
-                max: 1,
-                slider_start: 0.5,
-                data: {
-                    screen: "ias",
-                },
-            }
-            timeline.push(ias)
-        } else if (task === "MAIA") {
-            // MAIA-2 Questions
-            var scale = ["Never", "Always"]
-            var questions = []
-            for (const [index, element] of items2.entries()) {
-                questions.push({
-                    prompt: "<b>" + element + "</b>",
-                    name: dimensions2[index],
-                    ticks: scale,
-                    required: questions_required,
-                })
-            }
-
-            var maia = {
-                type: jsPsychMultipleSlider,
-                questions: questions,
-                randomize_question_order: true,
-                preamble:
-                    "<h2>About your body sensations...</h2>" +
-                    "<p>Please indicate how often each statement applies to you generally in daily life.</p><br /><br/> ",
-                require_movement: questions_required,
-                slider_width: null,
-                min: 0,
-                max: 1,
-                slider_start: 0.5,
-                data: {
-                    screen: "maia",
-                },
-            }
-            timeline.push(maia)
-        } else if (task === "PI99") {
-            // PI-99 Questions
-            var scale = ["Strongly Disagree", "Strongly Agree"]
-            var questions = []
-            var questionsPerPage = 33 // Number of questions per page
-            var totalPages = Math.ceil(items3.length / questionsPerPage) // Total number of pages
-
-            for (const [index, element] of items3.entries()) {
-                questions.push({
-                    prompt: "<b>" + element + "</b>",
-                    name: dimensions3[index],
-                    ticks: scale,
-                    required: questions_required,
-                })
-
-                // Check if the current page is full or if it's the last page
-                if (
-                    questions.length === questionsPerPage ||
-                    index === items3.length - 1
-                ) {
-                    var pageNumber =
-                        Math.floor(index / questionsPerPage) + 1 // Current page number
-
-                    var pi99 = {
-                        type: jsPsychMultipleSlider,
-                        questions: questions,
-                        randomize_question_order: true,
-                        preamble:
-                            "<h2>About the world we live in... (" +
-                            pageNumber +
-                            "/" +
-                            totalPages +
-                            ")</h2>" +
-                            "<p>Below are very general statements about the world—not the world we wish we lived in, but the actual world as it is now.</p>" +
-                            "<p>Please share your sense of agreement or disagreement.</p>" +
-                            "<p>When in doubt, go with what initially feels true of the real world.</p>" +
-                            "<p>There are no wrong answers. There is no need to overthink.</p><br /><br/> ",
-                        require_movement: questions_required,
-                        slider_width: null,
-                        min: 0,
-                        max: 1,
-                        slider_start: 0.5,
-                        data: {
-                            screen: "pi99",
-                        },
-                    }
-                    timeline.push(pi99)
-                    questions = [] // Reset questions array for the next page
-                }
-            }
-        }
-    }
-
-    // Debriefing and exit fullscreen
+    /* ----------------- Ending ----------------- */
     timeline.push({
         type: jsPsychHtmlButtonResponse,
         stimulus: "You've reached the end of the task, thank you!",
