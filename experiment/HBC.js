@@ -80,7 +80,7 @@ function HBC() {
             trial_duration: duration[trialIndex] * 1000,
             css_classes: ["fixation"],
             data: {
-                screen: "hct_interval",
+                screen: "HCT_interval",
                 time_start: function () {
                     return performance.now()
                 },
@@ -112,11 +112,11 @@ function HBC() {
                 {
                     prompt: "<b>How many heartbeats did you count?</b>",
                     placeholder: "Enter number",
-                    name: "hct_count",
+                    name: "HCT_count",
                 },
             ],
             data: {
-                screen: "hct_count",
+                screen: "HCT_count",
             },
         })
 
@@ -126,7 +126,7 @@ function HBC() {
             questions: [
                 {
                     prompt: "<b>How confident are you that your answer was correct?</b>",
-                    name: "hct_confidence",
+                    name: "HCT_confidence",
                     min: 0,
                     max: 1,
                     step: 0.01,
@@ -136,7 +136,7 @@ function HBC() {
                 },
             ],
             data: {
-                screen: "hct_confidence",
+                screen: "HCT_confidence",
             },
         })
     }
