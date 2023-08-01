@@ -151,7 +151,7 @@ var PI_items = [
     "I feel like everything changes all the time",
     "The world is a place where most things stay pretty much the same",
     "Instead of being cooperative, life is a brutal contest where you got to do whatever it takes to survive",
-    "For all life—from the smallest organisms, to plants, animals, and for people too—everything is a cut-throat competition",
+    "For all life from the smallest organisms, to plants, animals, and for people too everything is a cut-throat competition",
     "Instead of being cooperative, the world is a cut-throat and competitive place",
     "The world runs on trust and cooperation way more than suspicion and competition",
     "The world is hilarious; if we are not laughing, we are not paying attention",
