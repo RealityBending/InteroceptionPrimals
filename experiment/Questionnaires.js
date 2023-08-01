@@ -260,7 +260,7 @@ var PI_dimensions = [
     "Funny_3_GR",
     "Funny_4_GE",
     "Harmless_1_GS",
-    "Harmless_2GS_R",
+    "Harmless_2_GS_R",
     "Harmless_3_GS",
     "Harmless_4_GS",
     "Harmless_5_GS_R",
