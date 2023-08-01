@@ -1,4 +1,4 @@
-# Primals World Beliefs and Interoception
+# Primal World Beliefs and Interoception
 
 *Exploring the link between Interoception and Primal World Beliefs*
 
@@ -11,6 +11,6 @@ This study is part of a [*Sussex Junior Research Assistant*](https://realitybend
 
 ### Additional Materials
 
-- Ethics Application Number: ER/JX205/1
+- Ethics Review Number: ER/JX205/1
 - [Preregistration](osf.io/4snct)
 - [Repository version at the time of preregistration](https://github.com/RealityBending/PrimalsInteroception/releases/tag/0.1)
