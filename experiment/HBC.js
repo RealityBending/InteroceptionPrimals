@@ -22,8 +22,7 @@ function HBC() {
     }
 
     // Shuffle the trial order
-    var shuffledTrialOrder =
-        jsPsych.randomization.shuffle(trialOrder)
+    var shuffledTrialOrder = jsPsych.randomization.shuffle(trialOrder)
 
     // Define the pause duration (in milliseconds)
     var pauseDuration = 3000 // 3 seconds
@@ -53,9 +52,7 @@ function HBC() {
                 var countdownInterval = setInterval(function () {
                     count--
                     if (count > 0) {
-                        document.querySelector(
-                            "#countdown"
-                        ).innerHTML = count
+                        document.querySelector("#countdown").innerHTML = count
                     } else {
                         clearInterval(countdownInterval)
                     }
@@ -91,9 +88,7 @@ function HBC() {
             on_finish: function (data) {
                 document.querySelector("#marker1").remove()
                 data.duration =
-                    (performance.now() - data.time_start) /
-                    1000 /
-                    60
+                    (performance.now() - data.time_start) / 1000 / 60
             },
         })
 
@@ -130,7 +125,7 @@ function HBC() {
             type: jsPsychMultipleSlider,
             questions: [
                 {
-                    prompt: "<b>How confident are you that this number is correct?</b>",
+                    prompt: "<b>How confident are you that your answer was correct?</b>",
                     name: "hct_confidence",
                     min: 0,
                     max: 1,
