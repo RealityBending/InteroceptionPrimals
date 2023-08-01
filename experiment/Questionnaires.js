@@ -23,27 +23,27 @@ var IAS_items = [
     "I can always accurately perceive when something is going to be itchy",
 ]
 var IAS_dimensions = [
-    "1",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "10",
-    "11",
-    "12",
-    "13",
-    "14",
-    "15",
-    "16",
-    "17",
-    "18",
-    "19",
-    "20",
-    "21",
+    "IAS_1",
+    "IAS_2",
+    "IAS_3",
+    "IAS_4",
+    "IAS_5",
+    "IAS_6",
+    "IAS_7",
+    "IAS_8",
+    "IAS_9",
+    "IAS_10",
+    "IAS_11",
+    "IAS_12",
+    "IAS_13",
+    "IAS_14",
+    "IAS_15",
+    "IAS_16",
+    "IAS_17",
+    "IAS_18",
+    "IAS_19",
+    "IAS_20",
+    "IAS_21",
 ]
 
 // MAIA-2 questionnaire
@@ -338,6 +338,10 @@ for (const [index, element] of IAS_items.entries()) {
         name: IAS_dimensions[index],
         ticks: ["Strongly Disagree", "Strongly Agree"],
         required: false,
+        min: 0,
+        max: 1,
+        step: 0.01,
+        slider_start: 0.5,
     })
 }
 
@@ -352,9 +356,6 @@ var ias = {
         "<p>Please only rate how well you can perceive these signals without using external cues, for example, if you can only perceive how fast your heart is beating when you measure it by taking your pulse this would not count as accurate internal perception.</p><br /><br/> ",
     require_movement: false,
     slider_width: null,
-    min: 0,
-    max: 1,
-    slider_start: 0.5,
     data: {
         screen: "IAS",
     },
@@ -368,6 +369,10 @@ for (const [index, element] of MAIA_items.entries()) {
         name: MAIA_dimensions[index],
         ticks: ["Never", "Always"],
         required: false,
+        min: 0,
+        max: 1,
+        step: 0.01,
+        slider_start: 0.5,
     })
 }
 
@@ -380,9 +385,6 @@ var maia = {
         "<p>Please indicate how often each statement applies to you generally in daily life.</p><br /><br/> ",
     require_movement: false,
     slider_width: null,
-    min: 0,
-    max: 1,
-    slider_start: 0.5,
     data: {
         screen: "MAIA",
     },
@@ -396,6 +398,10 @@ for (const [index, element] of PI_items.entries()) {
         name: PI_dimensions[index],
         ticks: ["Strongly Disagree", "Strongly Agree"],
         required: false,
+        min: 0,
+        max: 1,
+        step: 0.01,
+        slider_start: 0.5,
     })
 }
 
@@ -411,9 +417,6 @@ var pi99 = {
         "<p>There are no wrong answers. There is no need to overthink.</p><br /><br/> ",
     require_movement: false,
     slider_width: null,
-    min: 0,
-    max: 1,
-    slider_start: 0.5,
     data: {
         screen: "PI99",
     },
