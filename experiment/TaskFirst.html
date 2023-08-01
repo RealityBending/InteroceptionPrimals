@@ -1,251 +1,250 @@
 <!DOCTYPE html>
 <html>
+    <head>
+        <!--create title shown in tab; not the same as header on webpage-->
+        <title>PrimalsInteroception</title>
 
-<head>
-    <!--create title shown in tab; not the same as header on webpage-->
-    <title>PrimalsInteroception</title>
+        <script src="utils/jspsych/jspsych.js"></script>
 
-    <script src="utils/jspsych/jspsych.js"></script>
+        <!--Load all necessary plugins stored in utils-->
+        <script src="utils/jspsych/plugin-html-keyboard-response.js"></script>
+        <script src="utils/jspsych/plugin-html-button-response.js"></script>
+        <script src="utils/jspsych/plugin-fullscreen.js"></script>
+        <script src="utils/jspsych/plugin-audio-button-response.js"></script>
+        <script src="utils/jspsych/plugin-canvas-button-response.js"></script>
+        <script src="utils/jspsych/plugin-preload.js"></script>
+        <script src="utils/jspsych/multiple-slider.js"></script>
+        <script src="utils/jspsych/plugin-survey-text.js"></script>
+        <script src="utils/jspsych/extension-record-video.js"></script>
+        <script src="utils/jspsych/plugin-initialize-camera.js"></script>
 
-    <!--Load all necessary plugins stored in utils-->
-    <script src="utils/jspsych/plugin-html-keyboard-response.js"></script>
-    <script src="utils/jspsych/plugin-html-button-response.js"></script>
-    <script src="utils/jspsych/plugin-fullscreen.js"></script>
-    <script src="utils/jspsych/plugin-audio-button-response.js"></script>
-    <script src="utils/jspsych/plugin-canvas-button-response.js"></script>
-    <script src="utils/jspsych/plugin-preload.js"></script>
-    <script src="utils/jspsych/multiple-slider.js"></script>
-    <script src="utils/jspsych/plugin-survey-text.js"></script>
-    <script src="utils/jspsych/extension-record-video.js"></script>
-    <script src="utils/jspsych/plugin-initialize-camera.js"></script>
+        <!-- Load task specific code -->
+        <script src="parameters.js"></script>
+        <script src="RestingState.js"></script>
+        <script src="Tapping.js"></script>
+        <script src="HBC.js"></script>
+        <script src="Questionnaires.js"></script>
 
-    <!-- Load task specific code -->
-    <script src="parameters.js"></script>
-    <script src="resting.js"></script>
-    <script src="tapping.js"></script>
-    <script src="counting.js"></script>
-    <script src="questionnaires.js"></script>
+        <!-- Applying default style here -->
+        <link
+            href="utils/jspsych/jspsych.css"
+            rel="stylesheet"
+            type="text/css"
+        />
+        <style>
+            /* set canvas to be full screen */
+            .jspsych-content {
+                max-width: 100%;
+            }
+        </style>
+    </head>
 
-    <!-- Applying default style here -->
-    <link href="utils/jspsych/jspsych.css" rel="stylesheet" type="text/css" />
-    <style>
-        /* set canvas to be full screen */
-        .jspsych-content {
-            max-width: 100%;
-        }
-    </style>
-</head>
+    <body></body>
 
-<body></body>
+    <script>
+        /* ----------------- Initialize experiment ----------------- */
+        var timeline = []
 
-<script>
-    /* ----------------- Initialize experiment ----------------- */
-    var timeline = []
-
-    var extensions = []
-    if (record_webcam == true) {
-        extensions.push({ type: jsPsychExtensionRecordVideo })
-    }
-
-    var jsPsych = initJsPsych({
-        extensions: extensions,
-        // override_safe_mode: true,
-        on_finish: function () {
-            jsPsych.data.displayData()
-            // jsPsych.data.displayData("json")
-            jsPsych.data
-                .get()
-                .localSave(
-                    "json",
-                    `${jsPsych.data.get().values()[0]["participant_id"]
-                    }_PI.json`
-                )
-        },
-        show_progress_bar: true,
-        message_progress_bar: ''
-    })
-
-    // Enter fullscreen mode
-    timeline.push({
-        type: jsPsychFullscreen,
-        fullscreen_mode: true,
-        delay_after: 0,
-    })
-
-    // Webcam initialization (can be activated in parameters.js)
-    if (record_webcam == true) {
-        timeline.push({
-            type: jsPsychInitializeCamera,
-        })
-    }
-
-    /* ----------------- Session Info ----------------- */
-    // Participant information
-    var participant_info = {
-        type: jsPsychSurveyText,
-        questions: [
-            {
-                prompt: "Enter the participant's ID:",
-                placeholder: "00",
-                name: "Participant_ID",
-            },
-        ],
-        data: {
-            screen: "participant_info",
-            condition: "Task_First",
-            version: version,
-            date: new Date().toLocaleDateString("fr-FR"),
-            time: new Date().toLocaleTimeString("fr-FR"),
-        },
-        on_finish: function () {
-            jsPsych.data.addProperties({
-                participant_id: jsPsych.data.get().last().values()[0][
-                    "response"
-                ]["Participant_ID"],
-            })
-        },
-    }
-    timeline.push(participant_info)
-
-    // Define the question text
-    var ageq =
-        "Please enter your age in years:"
-    var genderq =
-        "Please enter your gender:"
-    var raceq =
-        "Please enter your ethnicity:"
-
-    // Add the demografic questions
-    timeline.push({
-        type: jsPsychSurveyText,
-        questions: [
-            {
-                prompt: ageq,
-                placeholder: "Enter your answer here",
-                name: "age_response",
-            },
-        ],
-        data: {
-            screen: "agequestion",
-        },
-    })
-
-    timeline.push({
-        type: jsPsychSurveyText,
-        questions: [
-            {
-                prompt: genderq,
-                placeholder: "Enter your answer here",
-                name: "gender_response",
-            },
-        ],
-        data: {
-            screen: "genderquestion",
-        },
-    })
-
-    timeline.push({
-        type: jsPsychSurveyText,
-        questions: [
-            {
-                prompt: raceq,
-                placeholder: "Enter your answer here",
-                name: "race_response",
-            },
-        ],
-        data: {
-            screen: "racequestion",
-        },
-    })
-
-    /* ----------------- Preloading ----------------- */
-    // Preload audio variables
-    var beep = ["utils/beep.mp3"]
-    timeline.push({
-        type: jsPsychPreload,
-        auto_preload: true,
-        audio: beep,
-    })
-
-    /* ----------------- Resting State ----------------- */
-    // Instructions
-    timeline.push(RS_instructions)
-
-    // Create blank grey screen just before rest period
-    timeline.push(RS_buffer)
-
-    // Create blank grey screen for resting state
-    timeline.push(RS_task)
-
-    // Play beep
-    timeline.push(RS_beep)
-
-    // Add debriefing questionnaire
-    timeline.push(RS_questionnaire)
-
-    /* ----------------- Tapping----------------- */
-    // Instructions
-    timeline.push(TAP_instructions)
-
-    // Insert trials and breaks
-    for (let i = 0; i < 60; i++) {
-        create_TAP_trial_1();
-    }
-
-    timeline.push(TAP_break1) // Insert a break
-
-    for (let i = 0; i < 60; i++) {
-        create_TAP_trial_2();
-    }
-
-    timeline.push(TAP_break2) // Insert a break
-
-    for (let i = 0; i < 60; i++) {
-        create_TAP_trial_3();
-    }
-
-    // Debriefing questionnaire
-    timeline.push(TAP_influenced)
-    timeline.push(TAP_strategy)
-
-    /* ----------------- HBC ----------------- */
-    // Instructions
-    timeline.push(HBC_instructions)
-
-    // Full HBC
-    HBC()
-
-    /* ----------------- Other Questionnaires ----------------- */
-    //ias
-    timeline.push(ias)
-
-    //maia-2
-    timeline.push(maia)
-
-    //pi-99
-    timeline.push(pi99)
-
-    /* ----------------- Ending ----------------- */
-    timeline.push({
-        type: jsPsychHtmlButtonResponse,
-        stimulus: "You've reached the end of the task, thank you!",
-        choices: ["Exit Fullscreen"],
-        on_finish: function () {
-            document.exitFullscreen()
-        },
-    })
-
-    jsPsych.run(timeline)
-
-    function clean_data() {
+        var extensions = []
         if (record_webcam == true) {
-            items["video"] = jsPsych.data
-                .get()
-                .filter({ screen: "resting" })
-                .values()[0]["record_video_data"]
+            extensions.push({ type: jsPsychExtensionRecordVideo })
         }
-    }
 
-</script>
+        var jsPsych = initJsPsych({
+            extensions: extensions,
+            // override_safe_mode: true,
+            on_finish: function () {
+                jsPsych.data.displayData()
+                // jsPsych.data.displayData("json")
+                jsPsych.data
+                    .get()
+                    .localSave(
+                        "json",
+                        `${
+                            jsPsych.data.get().values()[0]["participant_id"]
+                        }_PI.json`
+                    )
+            },
+            show_progress_bar: true,
+            message_progress_bar: "",
+        })
 
+        // Enter fullscreen mode
+        timeline.push({
+            type: jsPsychFullscreen,
+            fullscreen_mode: true,
+            delay_after: 0,
+        })
+
+        // Webcam initialization (can be activated in parameters.js)
+        if (record_webcam == true) {
+            timeline.push({
+                type: jsPsychInitializeCamera,
+            })
+        }
+
+        /* ----------------- Session Info ----------------- */
+        // Participant information
+        var participant_info = {
+            type: jsPsychSurveyText,
+            questions: [
+                {
+                    prompt: "Enter the participant's ID:",
+                    placeholder: "00",
+                    name: "Participant_ID",
+                },
+            ],
+            data: {
+                screen: "participant_info",
+                condition: "Task_First",
+                version: version,
+                date: new Date().toLocaleDateString("fr-FR"),
+                time: new Date().toLocaleTimeString("fr-FR"),
+            },
+            on_finish: function () {
+                jsPsych.data.addProperties({
+                    participant_id: jsPsych.data.get().last().values()[0][
+                        "response"
+                    ]["Participant_ID"],
+                })
+            },
+        }
+        timeline.push(participant_info)
+
+        // Define the question text
+        var ageq = "Please enter your age in years:"
+        var genderq = "Please enter your gender:"
+        var raceq = "Please enter your ethnicity:"
+
+        // Add the demografic questions
+        timeline.push({
+            type: jsPsychSurveyText,
+            questions: [
+                {
+                    prompt: ageq,
+                    placeholder: "Enter your answer here",
+                    name: "age_response",
+                },
+            ],
+            data: {
+                screen: "agequestion",
+            },
+        })
+
+        timeline.push({
+            type: jsPsychSurveyText,
+            questions: [
+                {
+                    prompt: genderq,
+                    placeholder: "Enter your answer here",
+                    name: "gender_response",
+                },
+            ],
+            data: {
+                screen: "genderquestion",
+            },
+        })
+
+        timeline.push({
+            type: jsPsychSurveyText,
+            questions: [
+                {
+                    prompt: raceq,
+                    placeholder: "Enter your answer here",
+                    name: "race_response",
+                },
+            ],
+            data: {
+                screen: "racequestion",
+            },
+        })
+
+        /* ----------------- Preloading ----------------- */
+        // Preload audio variables
+        var beep = ["utils/beep.mp3"]
+        timeline.push({
+            type: jsPsychPreload,
+            auto_preload: true,
+            audio: beep,
+        })
+
+        /* ----------------- Resting State ----------------- */
+        // Instructions
+        timeline.push(RS_instructions)
+
+        // Create blank grey screen just before rest period
+        timeline.push(RS_buffer)
+
+        // Create blank grey screen for resting state
+        timeline.push(RS_task)
+
+        // Play beep
+        timeline.push(RS_beep)
+
+        // Add debriefing questionnaire
+        timeline.push(RS_questionnaire)
+
+        /* ----------------- Tapping----------------- */
+        // Instructions
+        timeline.push(TAP_instructions)
+
+        // Insert trials and breaks
+        for (let i = 0; i < 60; i++) {
+            create_TAP_trial_1()
+        }
+
+        timeline.push(TAP_break1) // Insert a break
+
+        for (let i = 0; i < 60; i++) {
+            create_TAP_trial_2()
+        }
+
+        timeline.push(TAP_break2) // Insert a break
+
+        for (let i = 0; i < 60; i++) {
+            create_TAP_trial_3()
+        }
+
+        // Debriefing questionnaire
+        timeline.push(TAP_influenced)
+        timeline.push(TAP_strategy)
+
+        /* ----------------- HBC ----------------- */
+        // Instructions
+        timeline.push(HBC_instructions)
+
+        // Full HBC
+        HBC()
+
+        /* ----------------- Other Questionnaires ----------------- */
+        //ias
+        timeline.push(ias)
+
+        //maia-2
+        timeline.push(maia)
+
+        //pi-99
+        timeline.push(pi99)
+
+        /* ----------------- Ending ----------------- */
+        timeline.push({
+            type: jsPsychHtmlButtonResponse,
+            stimulus: "You've reached the end of the task, thank you!",
+            choices: ["Exit Fullscreen"],
+            on_finish: function () {
+                document.exitFullscreen()
+            },
+        })
+
+        jsPsych.run(timeline)
+
+        function clean_data() {
+            if (record_webcam == true) {
+                items["video"] = jsPsych.data
+                    .get()
+                    .filter({ screen: "resting" })
+                    .values()[0]["record_video_data"]
+            }
+        }
+    </script>
 </html>
