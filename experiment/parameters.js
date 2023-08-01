@@ -1,7 +1,5 @@
 // experiment version
 version = "1.0"
-// HBC duration in sec
-duration = [25, 35, 45, 20, 30, 40]
 // [x, y, width, height] in pixels. Set to [0, 0, 0, 0] to disable.
 marker1 = [0, 37, 100, 100]
 // [x, y, width, height] in pixels. Set to [0, 0, 0, 0] to disable.

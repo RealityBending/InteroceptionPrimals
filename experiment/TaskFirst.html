@@ -22,7 +22,7 @@
         <script src="parameters.js"></script>
         <script src="RestingState.js"></script>
         <script src="Tapping.js"></script>
-        <script src="HBC.js"></script>
+        <script src="HCT.js"></script>
         <script src="Questionnaires.js"></script>
 
         <!-- Applying default style here -->
@@ -210,12 +210,24 @@
         timeline.push(TAP_influenced)
         timeline.push(TAP_strategy)
 
-        /* ----------------- HBC ----------------- */
+        /* ----------------- HCT ----------------- */
         // Instructions
-        timeline.push(HBC_instructions)
+        timeline.push(HCT_instructions)
 
-        // Full HBC
-        HBC()
+        timeline.push({
+            timeline: [
+                HCT_countdown,
+                HCT_interval(),
+                HCT_beep,
+                HCT_count,
+                HCT_confidence,
+            ],
+            // Loop comprehension for duration vector
+            timeline_variables: HCT_durations.map((i) => ({
+                duration: i * 1000,
+            })),
+            randomize_order: true,
+        })
 
         /* ----------------- Other Questionnaires ----------------- */
         //ias
