@@ -46,9 +46,6 @@
         var timeline = []
 
         var extensions = []
-        if (record_webcam == true) {
-            extensions.push({ type: jsPsychExtensionRecordVideo })
-        }
 
         var jsPsych = initJsPsych({
             extensions: extensions,
@@ -75,13 +72,6 @@
             fullscreen_mode: true,
             delay_after: 0,
         })
-
-        // Webcam initialization (can be activated in parameters.js)
-        if (record_webcam == true) {
-            timeline.push({
-                type: jsPsychInitializeCamera,
-            })
-        }
 
         /* ----------------- Session Info ----------------- */
         // Participant information
@@ -188,22 +178,33 @@
         // Instructions
         timeline.push(TAP_instructions)
 
-        // Insert trials and breaks
-        for (let i = 0; i < 60; i++) {
-            create_TAP_trial_1()
-        }
+        timeline.push({
+            timeline: [
+                create_TAP_trial("TAP1_waiting", null, "white"),
+                create_TAP_trial("TAP1_tap", 60, "black"),
+            ],
+            repetitions: 90,
+        })
 
         timeline.push(TAP_break1) // Insert a break
 
-        for (let i = 0; i < 60; i++) {
-            create_TAP_trial_2()
-        }
+        timeline.push({
+            timeline: [
+                create_TAP_trial("TAP2_waiting", null, "white"),
+                create_TAP_trial("TAP2_tap", 60, "black"),
+            ],
+            repetitions: 90,
+        })
 
         timeline.push(TAP_break2) // Insert a break
 
-        for (let i = 0; i < 60; i++) {
-            create_TAP_trial_3()
-        }
+        timeline.push({
+            timeline: [
+                create_TAP_trial("TAP3_waiting", null, "white"),
+                create_TAP_trial("TAP3_tap", 60, "black"),
+            ],
+            repetitions: 90,
+        })
 
         // Debriefing questionnaire
         timeline.push(TAP_influenced)
@@ -237,14 +238,5 @@
         })
 
         jsPsych.run(timeline)
-
-        function clean_data() {
-            if (record_webcam == true) {
-                items["video"] = jsPsych.data
-                    .get()
-                    .filter({ screen: "resting" })
-                    .values()[0]["record_video_data"]
-            }
-        }
     </script>
 </html>
