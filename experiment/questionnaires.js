@@ -1,5 +1,5 @@
 // IAS questionnaire
-var items1 = [
+var IAS_items = [
     "I can always accurately perceive when my heart is beating fast",
     "I can always accurately perceive when I am hungry",
     "I can always accurately perceive when I am breathing fast",
@@ -22,7 +22,7 @@ var items1 = [
     "I can always accurately perceive when something is going to be ticklish",
     "I can always accurately perceive when something is going to be itchy",
 ]
-var dimensions1 = [
+var IAS_dimensions = [
     "1",
     "2",
     "3",
@@ -47,7 +47,7 @@ var dimensions1 = [
 ]
 
 // MAIA-2 questionnaire
-var items2 = [
+var MAIA_items = [
     "When I am tense I notice where the tension is located in my body",
     "I notice when I am uncomfortable in my body",
     "I notice where in my body I am comfortable",
@@ -86,7 +86,7 @@ var items2 = [
     "I feel my body is a safe place",
     "I trust my body sensations",
 ]
-var dimensions2 = [
+var MAIA_dimensions = [
     "Noticing_1",
     "Noticing_2",
     "Noticing_3",
@@ -127,7 +127,7 @@ var dimensions2 = [
 ]
 
 // PI-99 questionnaire
-var items3 = [
+var PI_items = [
     "Whatever is happening around me often feels related to me or something I have done",
     "Much of what happens around me feels like it is because of me or related to me somehow",
     "My first instinct about events happening around me is that they are unrelated to me or anything I have done",
@@ -228,7 +228,7 @@ var items3 = [
     "No matter where we are, incredible beauty is always around us",
     "On the whole, the world is an uncomfortable and unpleasant place",
 ]
-var dimensions3 = [
+var PI_dimensions = [
     "AboutMe_1A",
     "AboutMe_2A",
     "AboutMe_3AR",
@@ -331,13 +331,12 @@ var dimensions3 = [
 ]
 
 // IAS Questions
-var ias_scale = ["Strongly Disagree", "Strongly Agree"]
 var ias_questions = []
-for (const [index, element] of items1.entries()) {
+for (const [index, element] of IAS_items.entries()) {
     ias_questions.push({
         prompt: "<b>" + element + "</b>",
-        name: dimensions1[index],
-        ticks: ias_scale,
+        name: IAS_dimensions[index],
+        ticks: ["Strongly Disagree", "Strongly Agree"],
         required: false,
     })
 }
@@ -357,18 +356,17 @@ var ias = {
     max: 1,
     slider_start: 0.5,
     data: {
-        screen: "ias",
+        screen: "IAS",
     },
 }
 
 // MAIA-2 Questions
-var maia2_scale = ["Never", "Always"]
 var maia2_questions = []
-for (const [index, element] of items2.entries()) {
+for (const [index, element] of MAIA_items.entries()) {
     maia2_questions.push({
         prompt: "<b>" + element + "</b>",
-        name: dimensions2[index],
-        ticks: maia2_scale,
+        name: MAIA_dimensions[index],
+        ticks: ["Never", "Always"],
         required: false,
     })
 }
@@ -386,18 +384,17 @@ var maia = {
     max: 1,
     slider_start: 0.5,
     data: {
-        screen: "maia",
+        screen: "MAIA",
     },
 }
 
 // PI-99 Questions
-var pi99_scale = ["Strongly Disagree", "Strongly Agree"]
 var pi99_questions = []
-for (const [index, element] of items3.entries()) {
+for (const [index, element] of PI_items.entries()) {
     pi99_questions.push({
         prompt: "<b>" + element + "</b>",
-        name: dimensions3[index],
-        ticks: pi99_scale,
+        name: PI_dimensions[index],
+        ticks: ["Strongly Disagree", "Strongly Agree"],
         required: false,
     })
 }
@@ -418,6 +415,6 @@ var pi99 = {
     max: 1,
     slider_start: 0.5,
     data: {
-        screen: "pi99",
+        screen: "PI99",
     },
 }
