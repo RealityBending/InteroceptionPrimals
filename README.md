@@ -11,5 +11,6 @@ This study is part of a [*Sussex Junior Research Assistant*](https://realitybend
 
 ### Additional Materials
 
+- Ethics Application Number: ER/JX205/1
 - [Preregistration](osf.io/4snct)
 - [Repository version at the time of preregistration](https://github.com/RealityBending/PrimalsInteroception/releases/tag/0.1)
