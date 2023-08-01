@@ -101,23 +101,18 @@
         }
         timeline.push(participant_info)
 
-        // Define the question text
-        var ageq = "Please enter your age in years:"
-        var genderq = "Please enter your gender:"
-        var raceq = "Please enter your ethnicity:"
-
         // Add the demografic questions
         timeline.push({
             type: jsPsychSurveyText,
             questions: [
                 {
-                    prompt: ageq,
+                    prompt: "Please enter your age (in years)",
                     placeholder: "Enter your answer here",
                     name: "age_response",
                 },
             ],
             data: {
-                screen: "agequestion",
+                screen: "age_question",
             },
         })
 
@@ -125,13 +120,13 @@
             type: jsPsychSurveyText,
             questions: [
                 {
-                    prompt: genderq,
+                    prompt: "Please enter your gender",
                     placeholder: "Enter your answer here",
                     name: "gender_response",
                 },
             ],
             data: {
-                screen: "genderquestion",
+                screen: "gender_question",
             },
         })
 
@@ -139,13 +134,13 @@
             type: jsPsychSurveyText,
             questions: [
                 {
-                    prompt: raceq,
+                    prompt: "Please enter your ethnicity",
                     placeholder: "Enter your answer here",
                     name: "race_response",
                 },
             ],
             data: {
-                screen: "racequestion",
+                screen: "race_question",
             },
         })
 

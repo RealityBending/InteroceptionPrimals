@@ -70,6 +70,7 @@ function HCT_interval() {
         on_finish: function (data) {
             document.querySelector("#marker1").remove()
             data.duration = (performance.now() - data.time_start) / 1000 / 60
+            data.interval = jsPsych.timelineVariable("duration") / 1000
         },
     }
 }
