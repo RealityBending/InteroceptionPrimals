@@ -10,7 +10,7 @@ var TAP_instructions = {
 var TAP_break1 = {
     type: jsPsychHtmlButtonResponse,
     stimulus:
-        "<p>Well done! Now tap with a <b>slower</b> rhythm.</p>" +
+        "<p>Well done! Now tap with a different, but <b>slower</b> rhythm.</p>" +
         "<p>Please <b>maintain the speed of tapping</b> until the second trial is over.</p>" +
         "<p>Press the button below to begin.</p>",
     choices: ["I'm ready"],
@@ -19,7 +19,7 @@ var TAP_break1 = {
 var TAP_break2 = {
     type: jsPsychHtmlButtonResponse,
     stimulus:
-        "<p>Well done! This time tap with a <b>faster</b> rhythm than the first time.</p>" +
+        "<p>Well done! This time tap with a different, but <b>faster</b> rhythm than the first time.</p>" +
         "<p>Please <b>maintain the speed of tapping</b> until the third trial is over.</p>" +
         "<p>Press the button below to begin.</p>",
     choices: ["I'm ready"],
@@ -29,8 +29,8 @@ var TAP_influenced = {
     type: jsPsychMultipleSlider,
     questions: [
         {
-            prompt: "<b>To what extent do you think your tapping rhythm was influenced by other things than your own will?</b>",
-            name: "tap_influenced",
+            prompt: "To what extent do you think your tapping rhythm was influenced by other things (e.g., music, surrounding noise, internal sensations...) than your own will?",
+            name: "TAP_influence",
             min: 0,
             max: 1,
             step: 0.01,
@@ -40,7 +40,7 @@ var TAP_influenced = {
         },
     ],
     data: {
-        screen: "TAP_influenced",
+        screen: "TAP_influence",
     },
 }
 
@@ -48,9 +48,11 @@ var TAP_strategy = {
     type: jsPsychSurveyText,
     questions: [
         {
-            prompt: "<b>Have you followed or been influenced by anything in particular while tapping (music, surrounding noise, internal sensations...)?</b>",
-            placeholder: "Enter your answer here",
-            name: "tap_strategy",
+            prompt:
+                "Please indicate if you followed or have been influenced by anything in particular while tapping (music, surrounding noise, internal sensations...)?" +
+                '<p><i>(e.g., "music in my head", "my breathing", "I was counting time in my head", ...)</i></p>',
+            placeholder: "Please type here...",
+            name: "TAP_strategy",
         },
     ],
     data: {
@@ -58,19 +60,24 @@ var TAP_strategy = {
     },
 }
 
-function create_TAP_trial_1() {
-    timeline.push({
+function create_TAP_trial(
+    screen = "TAP1_waiting",
+    trial_duration = null,
+    marker = "white"
+) {
+    return {
         type: jsPsychHtmlKeyboardResponse,
         extensions: extensions,
         on_load: function () {
-            create_marker(marker1, (color = "white"))
-            create_marker_2(marker2);
+            create_marker(marker1, (color = marker))
+            create_marker_2(marker2)
         },
         stimulus: "Please continue tapping...",
         choices: [" "],
+        trial_duration: trial_duration,
         css_classes: ["fixation"],
         data: {
-            screen: "TAP_waiting_1",
+            screen: screen,
             time_start: function () {
                 return performance.now()
             },
@@ -78,147 +85,7 @@ function create_TAP_trial_1() {
         on_finish: function (data) {
             document.querySelector("#marker1").remove()
             document.querySelector("#marker2").remove()
-            data.duration =
-                (performance.now() - data.time_start) /
-                1000 /
-                60
+            data.duration = (performance.now() - data.time_start) / 1000 / 60
         },
-    })
-
-    timeline.push({
-        type: jsPsychHtmlKeyboardResponse,
-        extensions: extensions,
-        on_load: function () {
-            create_marker(marker1)
-            create_marker_2(marker2);
-        },
-        stimulus: "",
-        choices: "NO_KEYS",
-        trial_duration: 50,
-        css_classes: ["fixation"],
-        data: {
-            screen: "TAP_tapped_1",
-            time_start: function () {
-                return performance.now()
-            },
-        },
-        on_finish: function (data) {
-            document.querySelector("#marker1").remove()
-            document.querySelector("#marker2").remove()
-            data.duration =
-                (performance.now() - data.time_start) /
-                1000 /
-                60
-        },
-    })
-}
-
-function create_TAP_trial_2() {
-    timeline.push({
-        type: jsPsychHtmlKeyboardResponse,
-        extensions: extensions,
-        on_load: function () {
-            create_marker(marker1, (color = "white"))
-            create_marker_2(marker2);
-        },
-        stimulus: "Please continue tapping...",
-        choices: [" "],
-        css_classes: ["fixation"],
-        data: {
-            screen: "TAP_waiting_2",
-            time_start: function () {
-                return performance.now()
-            },
-        },
-        on_finish: function (data) {
-            document.querySelector("#marker1").remove()
-            document.querySelector("#marker2").remove()
-            data.duration =
-                (performance.now() - data.time_start) /
-                1000 /
-                60
-        },
-    })
-
-    timeline.push({
-        type: jsPsychHtmlKeyboardResponse,
-        extensions: extensions,
-        on_load: function () {
-            create_marker(marker1)
-            create_marker_2(marker2);
-        },
-        stimulus: "",
-        choices: "NO_KEYS",
-        trial_duration: 50,
-        css_classes: ["fixation"],
-        data: {
-            screen: "TAP_tapped_2",
-            time_start: function () {
-                return performance.now()
-            },
-        },
-        on_finish: function (data) {
-            document.querySelector("#marker1").remove()
-            document.querySelector("#marker2").remove()
-            data.duration =
-                (performance.now() - data.time_start) /
-                1000 /
-                60
-        },
-    })
-}
-
-function create_TAP_trial_3() {
-    timeline.push({
-        type: jsPsychHtmlKeyboardResponse,
-        extensions: extensions,
-        on_load: function () {
-            create_marker(marker1, (color = "white"))
-            create_marker_2(marker2);
-        },
-        stimulus: "Please continue tapping...",
-        choices: [" "],
-        css_classes: ["fixation"],
-        data: {
-            screen: "TAP_waiting_3",
-            time_start: function () {
-                return performance.now()
-            },
-        },
-        on_finish: function (data) {
-            document.querySelector("#marker1").remove()
-            document.querySelector("#marker2").remove()
-            data.duration =
-                (performance.now() - data.time_start) /
-                1000 /
-                60
-        },
-    })
-
-    timeline.push({
-        type: jsPsychHtmlKeyboardResponse,
-        extensions: extensions,
-        on_load: function () {
-            create_marker(marker1)
-            create_marker_2(marker2);
-        },
-        stimulus: "",
-        choices: "NO_KEYS",
-        trial_duration: 50,
-        css_classes: ["fixation"],
-        data: {
-            screen: "TAP_tapped_3",
-            time_start: function () {
-                return performance.now()
-            },
-        },
-        on_finish: function (data) {
-            document.querySelector("#marker1").remove()
-            document.querySelector("#marker2").remove()
-            data.duration =
-                (performance.now() - data.time_start) /
-                1000 /
-                60
-        },
-    })
+    }
 }

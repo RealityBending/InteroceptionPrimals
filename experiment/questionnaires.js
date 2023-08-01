@@ -20,7 +20,7 @@ var items1 = [
     "I can always accurately perceive when my blood sugar is low",
     "I can always accurately perceive when someone is touching me affectionately rather than non-affectionately",
     "I can always accurately perceive when something is going to be ticklish",
-    "I can always accurately perceive when something is going to be itchy"
+    "I can always accurately perceive when something is going to be itchy",
 ]
 var dimensions1 = [
     "1",
@@ -43,7 +43,7 @@ var dimensions1 = [
     "18",
     "19",
     "20",
-    "21"
+    "21",
 ]
 
 // MAIA-2 questionnaire
@@ -84,7 +84,7 @@ var items2 = [
     "I listen to my body to inform me about what to do",
     "I am at home in my body",
     "I feel my body is a safe place",
-    "I trust my body sensations"
+    "I trust my body sensations",
 ]
 var dimensions2 = [
     "Noticing_1",
@@ -123,7 +123,7 @@ var dimensions2 = [
     "BodyListening_3",
     "Trusting_1",
     "Trusting_2",
-    "Trusting_3"
+    "Trusting_3",
 ]
 
 // PI-99 questionnaire
@@ -226,7 +226,7 @@ var items3 = [
     "Unfamiliar things and places are usually worth trying or checking out",
     "No matter where we are or what the topic might be, the world is fascinating",
     "No matter where we are, incredible beauty is always around us",
-    "On the whole, the world is an uncomfortable and unpleasant place"
+    "On the whole, the world is an uncomfortable and unpleasant place",
 ]
 var dimensions3 = [
     "AboutMe_1A",
@@ -338,7 +338,7 @@ for (const [index, element] of items1.entries()) {
         prompt: "<b>" + element + "</b>",
         name: dimensions1[index],
         ticks: ias_scale,
-        required: questions_required,
+        required: false,
     })
 }
 
@@ -351,7 +351,7 @@ var ias = {
         "<p>Below are several statements regarding how accurately you can perceive specific bodily sensations. Please rate on the scale how well you believe you can perceive each specific signal.</p>" +
         "<p>For example, if you often feel you need to urinate and then realise you do not need to when you go to the toilet you would rate your accuracy perceiving this bodily signal as low.</p>" +
         "<p>Please only rate how well you can perceive these signals without using external cues, for example, if you can only perceive how fast your heart is beating when you measure it by taking your pulse this would not count as accurate internal perception.</p><br /><br/> ",
-    require_movement: questions_required,
+    require_movement: false,
     slider_width: null,
     min: 0,
     max: 1,
@@ -369,7 +369,7 @@ for (const [index, element] of items2.entries()) {
         prompt: "<b>" + element + "</b>",
         name: dimensions2[index],
         ticks: maia2_scale,
-        required: questions_required,
+        required: false,
     })
 }
 
@@ -380,7 +380,7 @@ var maia = {
     preamble:
         "<h2>About your body sensations...</h2>" +
         "<p>Please indicate how often each statement applies to you generally in daily life.</p><br /><br/> ",
-    require_movement: questions_required,
+    require_movement: false,
     slider_width: null,
     min: 0,
     max: 1,
@@ -398,7 +398,7 @@ for (const [index, element] of items3.entries()) {
         prompt: "<b>" + element + "</b>",
         name: dimensions3[index],
         ticks: pi99_scale,
-        required: questions_required,
+        required: false,
     })
 }
 
@@ -412,7 +412,7 @@ var pi99 = {
         "<p>Please share your sense of agreement or disagreement.</p>" +
         "<p>When in doubt, go with what initially feels true of the real world.</p>" +
         "<p>There are no wrong answers. There is no need to overthink.</p><br /><br/> ",
-    require_movement: questions_required,
+    require_movement: false,
     slider_width: null,
     min: 0,
     max: 1,

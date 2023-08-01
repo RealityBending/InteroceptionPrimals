@@ -1,5 +1,4 @@
-
-// Resting state questionnaire 
+// Resting state questionnaire
 var items = [
     "I had busy thoughts",
     "I had rapidly switching thoughts",
@@ -63,12 +62,6 @@ var RS_instructions = {
     choices: ["Continue"],
 }
 
-if (record_webcam) {
-    var extensions = [{ type: jsPsychExtensionRecordVideo }]
-} else {
-    var extensions = []
-}
-
 // Tasks ======================================================================
 // Create blank grey screen just before rest period
 var RS_buffer = {
@@ -84,32 +77,30 @@ var RS_buffer = {
     stimulus: "",
     choices: ["s"],
     trial_duration: 1000, // 1 second
-    css_classes: ["fixation"],
+    css_classes: ["RS_fixation"],
 }
 
 // Create blank grey screen for resting state
 var RS_task = {
     type: jsPsychHtmlKeyboardResponse,
-    extensions: extensions,
     on_load: function () {
-        create_marker(marker1);
-        create_marker_2(marker2);
+        create_marker(marker1)
+        create_marker_2(marker2)
     },
     stimulus: "<p style='font-size:150px;'>+</p>",
     choices: ["s"],
-    trial_duration: duratio * 60 * 1000,
+    trial_duration: 8 * 60 * 1000,
     css_classes: ["fixation"],
     data: {
-        screen: "resting",
+        screen: "RS_resting",
         time_start: function () {
             return performance.now()
         },
     },
     on_finish: function (data) {
-        document.querySelector("#marker1").remove();
-        document.querySelector("#marker2").remove();
-        data.duration =
-            (performance.now() - data.time_start) / 1000 / 60
+        document.querySelector("#marker1").remove()
+        document.querySelector("#marker2").remove()
+        data.duration = (performance.now() - data.time_start) / 1000 / 60
     },
 }
 
@@ -135,7 +126,7 @@ for (const [index, element] of items.entries()) {
         prompt: "<b>" + element + "</b>",
         name: dimensions[index],
         ticks: scale,
-        required: questions_required,
+        required: false,
     })
 }
 // Randomize order (comment this out to deactivate the randomization)
@@ -147,7 +138,7 @@ for (const [index, element] of check_items.entries()) {
         prompt: "<b>" + element + "</b>",
         name: "Check_" + (index + 1),
         ticks: scale,
-        required: questions_required,
+        required: false,
     })
 }
 
@@ -159,12 +150,12 @@ var RS_questionnaire = {
     preamble:
         "<p>We are interested in the potential feelings and thoughts you may have experienced during the resting period.</p>" +
         "<p>Please indicate the extent to which you agree with each statement.</p><br /><br/> ",
-    require_movement: questions_required,
+    require_movement: false,
     slider_width: null,
     min: 0,
     max: 1,
     slider_start: 0.5,
     data: {
-        screen: "questionnaire",
+        screen: "RS_assessment",
     },
 }
