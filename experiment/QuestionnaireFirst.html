@@ -22,7 +22,7 @@
         <script src="parameters.js"></script>
         <script src="RestingState.js"></script>
         <script src="Tapping.js"></script>
-        <script src="HBC.js"></script>
+        <script src="HCT.js"></script>
         <script src="Questionnaires.js"></script>
 
         <!-- Applying default style here -->
@@ -220,13 +220,25 @@
         //pi-99
         timeline.push(pi99)
 
-        /* ----------------- HBC ----------------- */
+        /* ----------------- HCT ----------------- */
         // Instructions
-        timeline.push(HBC_instructions)
+        timeline.push(HCT_instructions)
 
-        // Full HBC
-        HBC()
-
+        timeline.push({
+            timeline: [
+                HCT_countdown,
+                HCT_interval(),
+                HCT_beep,
+                HCT_count,
+                HCT_confidence,
+            ],
+            // Loop comprehension for duration vector
+            timeline_variables: HCT_durations.map((i) => ({
+                duration: i * 1000,
+            })),
+            randomize_order: true,
+        })
+        
         /* ----------------- Ending ----------------- */
         timeline.push({
             type: jsPsychHtmlButtonResponse,
