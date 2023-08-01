@@ -1,26 +1,35 @@
-var TAP_instructions = {
+var TAP_instructions1 = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus:
         "<p><b>Instructions</b></p>" +
         "<p>In the following task, you will need to tap the spacebar with any rhythm you prefer.</p>" +
-        "<p>Please <b>maintain the speed of tapping</b> until the first trial is over.</p>" +
+        "<p>Please <b>maintain the speed of tapping</b> until the trial is over.</p>" +
         "<p>Press the space bar to begin.</p>",
 }
 
-var TAP_break1 = {
+var TAP_instructions2 = {
     type: jsPsychHtmlButtonResponse,
     stimulus:
         "<p>Well done! Now tap with a different, but <b>slower</b> rhythm.</p>" +
-        "<p>Please <b>maintain the speed of tapping</b> until the second trial is over.</p>" +
+        "<p>Please <b>maintain the speed of tapping</b> until the trial is over.</p>" +
         "<p>Press the button below to begin.</p>",
     choices: ["I'm ready"],
 }
 
-var TAP_break2 = {
+var TAP_instructions3 = {
     type: jsPsychHtmlButtonResponse,
     stimulus:
         "<p>Well done! This time tap with a different, but <b>faster</b> rhythm than the first time.</p>" +
-        "<p>Please <b>maintain the speed of tapping</b> until the third trial is over.</p>" +
+        "<p>Please <b>maintain the speed of tapping</b> until the trial is over.</p>" +
+        "<p>Press the button below to begin.</p>",
+    choices: ["I'm ready"],
+}
+
+var TAP_instructions4 = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus:
+        "<p>Well done! For the final run, try to tap <b>arhythmically</b> by changing the timing between the presses and making it as much 'unpredictable' and 'random' as you can.</p>" +
+        "<p>Do continue making new presses until the trial is over.</p>" +
         "<p>Press the button below to begin.</p>",
     choices: ["I'm ready"],
 }

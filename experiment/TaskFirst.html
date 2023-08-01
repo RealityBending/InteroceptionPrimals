@@ -171,32 +171,32 @@
 
         /* ----------------- Tapping----------------- */
         // Instructions
-        timeline.push(TAP_instructions)
+        timeline.push(TAP_instructions1)
 
         timeline.push({
             timeline: [
-                create_TAP_trial("TAP1_waiting", null, "white"),
-                create_TAP_trial("TAP1_tap", 60, "black"),
+                create_TAP_trial("TAP_baseline_wait", null, "white"),
+                create_TAP_trial("TAP_baseline_tap", 60, "black"),
             ],
             repetitions: 90,
         })
 
-        timeline.push(TAP_break1) // Insert a break
+        timeline.push(TAP_instructions2) // Insert a break
 
         timeline.push({
             timeline: [
-                create_TAP_trial("TAP2_waiting", null, "white"),
-                create_TAP_trial("TAP2_tap", 60, "black"),
+                create_TAP_trial("TAP_slower_wait", null, "white"),
+                create_TAP_trial("TAP_slower_tap", 60, "black"),
             ],
             repetitions: 90,
         })
 
-        timeline.push(TAP_break2) // Insert a break
+        timeline.push(TAP_instructions3) // Insert a break
 
         timeline.push({
             timeline: [
-                create_TAP_trial("TAP3_waiting", null, "white"),
-                create_TAP_trial("TAP3_tap", 60, "black"),
+                create_TAP_trial("TAP_faster_wait", null, "white"),
+                create_TAP_trial("TAP_faster_tap", 60, "black"),
             ],
             repetitions: 90,
         })
@@ -204,6 +204,16 @@
         // Debriefing questionnaire
         timeline.push(TAP_influenced)
         timeline.push(TAP_strategy)
+
+        timeline.push(TAP_instructions4) // Insert a break
+
+        timeline.push({
+            timeline: [
+                create_TAP_trial("TAP_random_waiting", null, "white"),
+                create_TAP_trial("TAP_random_tap", 60, "black"),
+            ],
+            repetitions: 90,
+        })
 
         /* ----------------- HCT ----------------- */
         // Instructions
