@@ -58,7 +58,7 @@ var TAP_strategy = {
     questions: [
         {
             prompt:
-                "Please indicate if you followed or have been influenced by anything in particular while tapping (music, surrounding noise, internal sensations...)?" +
+                "Please indicate if you followed or have been influenced by anything in particular while tapping?" +
                 '<p><i>(e.g., "music in my head", "my breathing", "I was counting time in my head", ...)</i></p>',
             placeholder: "Please type here...",
             name: "TAP_strategy",
