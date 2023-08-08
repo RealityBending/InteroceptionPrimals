@@ -34,6 +34,15 @@ var TAP_instructions4 = {
     choices: ["I'm ready"],
 }
 
+var TAP_instructions5 = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus:
+        "<p>Well done! For the final trial, please try to tap with the <b>same rhythm as your hearbeat without physically measuring it</b>.</p>" +
+        "<p>Do continue making new presses until the trial is over.</p>" +
+        "<p>Press the button below to begin.</p>",
+    choices: ["I'm ready"],
+}
+
 var TAP_influenced = {
     type: jsPsychMultipleSlider,
     questions: [
