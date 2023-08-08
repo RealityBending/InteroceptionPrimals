@@ -179,7 +179,7 @@
         ],
         repetitions: 90,
     })
-
+    
     // Debriefing questionnaire
     timeline.push(TAP_influenced)
     timeline.push(TAP_strategy)
@@ -194,6 +194,16 @@
         repetitions: 90,
     })
 
+    timeline.push(TAP_instructions5) // Insert a break
+
+    timeline.push({
+        timeline: [
+            create_TAP_trial("TAP_heartbeat_waiting", null, "white"),
+            create_TAP_trial("TAP_heartbeat_tap", 60, "black"),
+        ],
+        repetitions: 60,
+    })
+    
     /* ----------------- Other Questionnaires ----------------- */
     //ias
     timeline.push(ias)
