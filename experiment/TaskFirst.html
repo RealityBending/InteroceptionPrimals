@@ -194,6 +194,16 @@
         repetitions: 90,
     })
 
+    timeline.push(TAP_instructions5) // Insert a break
+
+    timeline.push({
+        timeline: [
+            create_TAP_trial("TAP_heartbeat_waiting", null, "white"),
+            create_TAP_trial("TAP_heartbeat_tap", 60, "black"),
+        ],
+        repetitions: 60,
+    })
+
     /* ----------------- HCT ----------------- */
     // Instructions
     timeline.push(HCT_instructions)
