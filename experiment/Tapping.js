@@ -28,7 +28,7 @@ var TAP_instructions3 = {
 var TAP_instructions4 = {
     type: jsPsychHtmlButtonResponse,
     stimulus:
-        "<p>Well done! For the final run, try to tap <b>arhythmically</b> by changing the timing between the presses and making it as much 'unpredictable' and 'random' as you can.</p>" +
+        "<p>Well done! Now please try to tap <b>arhythmically</b> by changing the timing between the presses and making it as much 'unpredictable' and 'random' as you can.</p>" +
         "<p>Do continue making new presses until the trial is over.</p>" +
         "<p>Press the button below to begin.</p>",
     choices: ["I'm ready"],
