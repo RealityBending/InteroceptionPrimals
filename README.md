@@ -7,7 +7,7 @@ This study is part of a [*Sussex Junior Research Assistant*](https://realitybend
 ### Try the Experiment
 
 - [**Order 1 (Task First)**](https://realitybending.github.io/PrimalsInteroception/experiment/TaskFirst.html)
-- [**Order 2 (Questionnaires First)**](https://realitybending.github.io/PrimalsInteroception/experiment/QuestionnaireFirst.html)
+- [**Order 2 (Questionnaire First)**](https://realitybending.github.io/PrimalsInteroception/experiment/QuestionnaireFirst.html)
 
 ### Additional Materials
 
