@@ -37,7 +37,7 @@ var TAP_instructions4 = {
 var TAP_instructions5 = {
     type: jsPsychHtmlButtonResponse,
     stimulus:
-        "<p>Well done! For the final trial, please try to tap with the <b>same rhythm as your hearbeat without physically measuring it</b>.</p>" +
+        "<p>Well done! For the final trial, please try to tap <b>every time you feel a heart beat</b>.</p>" +
         "<p>Do continue making new presses until the trial is over.</p>" +
         "<p>Press the button below to begin.</p>",
     choices: ["I'm ready"],
@@ -105,5 +105,16 @@ function create_TAP_trial(
             document.querySelector("#marker2").remove()
             data.duration = (performance.now() - data.time_start) / 1000 / 60
         },
+    }
+}
+
+function create_TAP_sequence(screen = "TAP1", repetitions = 90) {
+    return {
+        timeline: [
+            create_TAP_trial(screen + "_waiting", null, "white"),
+            create_TAP_trial(screen + "_tap", 60, "black"),
+        ],
+        repetitions: repetitions,
+        // trial_duration: 5,  // Needs https://github.com/jspsych/jsPsych/discussions/3110
     }
 }
