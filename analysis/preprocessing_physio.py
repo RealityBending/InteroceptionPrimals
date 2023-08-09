@@ -1,68 +1,69 @@
+import io
 import os
 
 import matplotlib.pyplot as plt
+import mne
 import neurokit2 as nk
 import numpy as np
 import pandas as pd
+import PIL
+import pyllusion as ill
+
+
+def fig2img(fig):
+    """Convert a Matplotlib figure to a PIL Image and return it"""
+    import io
+
+    buf = io.BytesIO()
+    fig.savefig(buf)
+    buf.seek(0)
+    img = PIL.Image.open(buf)
+    return img
+
 
 # Variables =======================================================
 # Change the path to your local data folder.
 # The data can be downloaded from OpenNeuro (TODO).
-path = "C:/Users/domma/Box/Data/PrimalsInteroception/pilots/physio/"
+path = "C:/Users/domma/Box/Data/PrimalsInteroception/Reality Bending Lab - PrimalsInteroception/"
+
+# Get participant list
+df_ppt = pd.read_csv(path + "participants.tsv", sep="\t")
 
 
-# Convenience functions ============================================
-def load_data(path, task="HBC"):
-    files = os.listdir(path)
-    df, info = nk.read_xdf(filename=path + [file for file in files if task in file][0])
+# Initialize variables
+signals_qc_hct_ecg = []
 
-    # # Test
-    # df1 = df.iloc[0:3000]
-    # df2 = info["data"][0].iloc[0:300]
-    # plt.plot(df1.index, df1["TP9"])
-    # plt.plot(df2.index, df2["TP9"])
+for sub in df_ppt["participant_id"].values:
+    # Print progress and comments
+    print(sub)
+    print("  - " + df_ppt[df_ppt["participant_id"] == sub]["Comments"].values[0])
 
-    # df3 = info["data"][4].iloc[0:1000]
-    # plt.plot(df1.index, df1["ECG"])
-    # plt.plot(df3.index, df3["ECGBIT1"])
+    # Path to EEG data
+    path_eeg = path + sub + "/eeg/"
 
-    df = df.reset_index()
+    # Heartbeat Counting Task (HCT) =======================================================
+    # Open HCT file
+    file = [file for file in os.listdir(path_eeg) if "HCT" in file]
+    file = path_eeg + [file for file in file if ".vhdr" in file][0]
+    hct = mne.io.read_raw_brainvision(file, preload=True, verbose=False)
+    hct = hct.to_data_frame()[["PHOTO", "ECG", "PPG_Muse"]]
+    hct = hct.dropna()  # Remove NA
 
-    df = df.drop(
-        columns=[
-            "Right AUX",
-            "X",
-            "Y",
-            "Z",
-            "RED",
-            "GYRO_X",
-            "GYRO_Y",
-            "GYRO_Z",
-            "nSeq",
-            "index",
-        ]
+    hct, _ = nk.bio_process(
+        ecg=hct["ECG"].values,
+        ppg=hct["PPG_Muse"],
+        sampling_rate=2000,
+        keep=hct["PHOTO"],
     )
 
-    df = df.rename(
-        columns={
-            "PPG": "PPG_Muse",
-            "RESPBIT0": "RSP",
-            "ECGBIT1": "ECG",
-            "PULSEOXI2": "PPG",
-            "LUX3": "PHOTO",
-        }
+    # Save ECG plot
+    nk.ecg_plot(hct, sampling_rate=2000)
+    fig = plt.gcf()
+    img = ill.image_text(
+        sub, color="white", size=100, x=-0.82, y=0.90, image=fig2img(fig)
     )
+    plt.close(fig)
+    signals_qc_hct_ecg.append(img)
 
-    return df, info
-
-
-# Load Data =======================================================
-participants = os.listdir(path)
-
-for participant in participants:
-    # participant = "sub-pilot2"
-    path_sub = path + participant + "/ses-S001/beh/"
-
-    df, info = load_data(path=path_sub, task="HBC")
-
-    nk.signal_plot(df, subplots=True)
+signals_qc_hct_ecg = ill.image_mosaic(signals_qc_hct_ecg, ncols=2, nrows="auto")
+signals_qc_hct_ecg.save("figures/signals_qc_hct_ecg.png")
