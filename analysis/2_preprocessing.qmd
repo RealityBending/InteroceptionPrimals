@@ -1,0 +1,98 @@
+---
+title: "Preprocessing"
+format: html
+editor:
+    render-on-save: true
+execute:
+  cache: true
+---
+
+## Descriptive Statistics
+
+
+```{r}
+#| output: false
+library(tidyverse)
+library(easystats)
+
+
+# setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+df <- read.csv("../data/data.csv")
+
+# names(df)
+```
+
+
+### Resting State
+
+
+
+#### Resting State Assessment
+
+##### Duration
+
+```{r}
+#| code-fold: true
+#| fig-height: 4
+df |>
+    mutate(participant_id = fct_reorder(participant_id, RS_Duration)) |>
+    ggplot(aes(y = participant_id, x = RS_Duration)) +
+    geom_bar(stat = "identity") +
+    theme_minimal()
+```
+
+##### Distribution
+
+```{r}
+df |>
+    select(participant_id, starts_with("RS")) |>
+    pivot_longer(-participant_id, names_to = "Question", values_to = "Value")
+```
+
+
+#### Heartbeat Evoked Potential (HEP)
+
+
+
+```{r}
+#| code-fold: true
+#| label: fig-RS_HEP
+#| fig-cap: "Heartbeat Evoked Potential (HEP) for each participant during the resting state, overlayed over average ECG trace and PPG (infrared sensor on the forehead)."
+
+# df <- read.csv("../data/data_hep.csv") |>
+#     # filter(participant_id %in% c("sub-07")) |>
+#     mutate(time = time * 1000) |>
+#     group_by(participant_id) |>
+#     datawizard::standardize(select = c("AF7", "AF8")) |>
+#     ungroup()
+
+# av <- df |>
+#     select(-participant_id) |>
+#     group_by(time) |>
+#     summarise_all(mean) |>
+#     datawizard::rescale(select = c("ECG", "PPG_Muse"), to = c(-3, 3))
+
+# df |>
+#     ggplot(aes(x = time, y = AF8)) +
+#     geom_vline(xintercept = 0, linetype = "dashed") +
+#     geom_ribbon(aes(xmin = 200, xmax = 400), fill = "#FFECB3") +
+#     geom_line(data = av, aes(y = PPG_Muse), color = "#9C27B0", linewidth = 2) +
+#     geom_line(data = av, aes(y = ECG), color = "#F44336", linewidth = 2) +
+#     geom_line(aes(group = participant_id), alpha = 0.2) +
+#     geom_line(data = av, color = "black", linewidth = 2) +
+#     scale_x_continuous(breaks = c(-200, 0, 200, 400, 600, 800), expand = c(0, 0)) +
+#     scale_y_continuous(expand = c(0.01, 0.01)) +
+#     labs(x = "Time relative to ECG R-peak (ms)", y = "EEG Amplitude (AF8)") +
+#     theme_modern() +
+#     theme(
+#         panel.grid.major.y = element_blank(),
+#         panel.grid.minor.y = element_blank()
+#     )
+```
+
+```{r}
+#| include = FALSE
+
+# Save cleaned data
+write.csv(df, "../data/data_clean.csv")
+```
