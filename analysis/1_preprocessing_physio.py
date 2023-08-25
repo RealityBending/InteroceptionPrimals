@@ -1,5 +1,6 @@
 import io
 import os
+import time
 
 import autoreject
 import matplotlib.pyplot as plt
@@ -52,7 +53,10 @@ def qc_eeg(raw, sub, plot_psd=[]):
 
     fig1, ax = plt.subplots(4, 1, figsize=(6, 5))
     fig1.suptitle(f"{sub}")
-    raw.to_data_frame()[ch_names].plot(ax=ax, subplots=True, linewidth=0.5)
+
+    df = raw.to_data_frame()
+    df.index = df["time"] / 60
+    df[ch_names].plot(ax=ax, subplots=True, linewidth=0.5)
 
     # PSD
     fig2, ax = plt.subplots(1, 1, figsize=(6, 5))
@@ -114,19 +118,19 @@ def qc_heo(power, itc, sub, plot_heo=[]):
     return plot_heo
 
 
-def analyze_hep(raw, ecg=None, ppg=None):
+def analyze_hep(raw, events):
     out = {}
-    # Preprocess physio
-    out["ecg"], _ = nk.bio_process(ecg=ecg, ppg=ppg, sampling_rate=raw.info["sfreq"])
 
-    # Find R-peaks
-    events, _ = nk.events_to_mne(out["ecg"]["ECG_R_Peaks"].values.nonzero()[0])
+    # From Zaccaro et al. (preprint): Epochs were not baseline-corrected (Petzschner et al., 2019).
+    # This decision was made to exclude confounding residual CFA evoked by ECG waves that precede
+    # the R-peak (P and Q-waves).
+
     epochs = mne.Epochs(
         raw,
         events,
         tmin=-0.3,
         tmax=0.7,
-        detrend=0,
+        detrend=None,
         decim=4,  # Downsample to 500 Hz
         verbose=False,
         preload=True,
@@ -146,6 +150,7 @@ def analyze_hep(raw, ecg=None, ppg=None):
         method=lambda x: np.nanmean(x, axis=0),
     ).to_data_frame()
     hep.index = hep["time"]
+    out["df"] = hep
 
     hep1 = hep[0.2:0.4][["AF7", "AF8"]]
     hep2 = hep[0.4:0.6][["AF7", "AF8"]]
@@ -182,8 +187,8 @@ def analyze_hep(raw, ecg=None, ppg=None):
 # Variables ==================================================================================
 # Change the path to your local data folder.
 # The data can be downloaded from OpenNeuro (TODO).
-# path = "C:/Users/domma/Box/Data/PrimalsInteroception/Reality Bending Lab - PrimalsInteroception/"
-path = "C:/Users/dmm56/Box/Data/PrimalsInteroception/Reality Bending Lab - PrimalsInteroception/"
+path = "C:/Users/domma/Box/Data/PrimalsInteroception/Reality Bending Lab - PrimalsInteroception/"
+# path = "C:/Users/dmm56/Box/Data/PrimalsInteroception/Reality Bending Lab - PrimalsInteroception/"
 
 # Get participant list
 meta = pd.read_csv(path + "participants.tsv", sep="\t")
@@ -192,15 +197,19 @@ meta = pd.read_csv(path + "participants.tsv", sep="\t")
 df = pd.DataFrame()
 df_hep = pd.DataFrame()
 
-qc_hct_ecg = []
-qc_hct_ppg = []
 qc_rs_psd = []
 qc_rs_ecg = []
 qc_rs_ppg = []
 qc_rs_hep = []
 qc_rs_heo = []
+qc_hct_psd = []
+qc_hct_ecg = []
+qc_hct_ppg = []
+qc_hct_hep = []
+qc_hct_heo = []
 
-# sub = "sub-07"
+
+# sub = "sub-03"
 # Loop through participants ==================================================================
 for sub in meta["participant_id"].values:
     # Print progress and comments
@@ -213,7 +222,7 @@ for sub in meta["participant_id"].values:
 
     # Questionnaires -------------------------------------------------------------------------
     file = [file for file in os.listdir(path_beh) if "Questionnaires" in file]
-    file = path_beh + [file for file in file if ".tsv" in file][0]
+    file = path_beh + [f for f in file if ".tsv" in f][0]
     dfsub = pd.read_csv(file, sep="\t")
 
     # Resting State ==========================================================================
@@ -223,13 +232,13 @@ for sub in meta["participant_id"].values:
 
     # Open RS assessment
     file = [file for file in os.listdir(path_beh) if "RS" in file]
-    file = path_beh + [file for file in file if ".tsv" in file][0]
+    file = path_beh + [f for f in file if ".tsv" in f][0]
     rs_beh = pd.read_csv(file, sep="\t").drop(["participant_id"], axis=1)
     dfsub = pd.concat([dfsub, rs_beh.add_prefix("RS_")], axis=1)
 
     # Open RS file
     file = [file for file in os.listdir(path_eeg) if "RS" in file]
-    file = path_eeg + [file for file in file if ".vhdr" in file][0]
+    file = path_eeg + [f for f in file if ".vhdr" in f][0]
     rs = mne.io.read_raw_brainvision(file, preload=True)
 
     # Detect onset of RS
@@ -249,10 +258,13 @@ for sub in meta["participant_id"].values:
         rs, smin=events["onset"][0], smax=events["onset"][0] + events["duration"][0]
     )
 
-    # Fix for recording interruption (cut till before the nan)
-    if sub in ["sub-10"]:
+    # Fix for recording interruption
+    if sub in ["sub-10"]:  # Cut till before the nan
         first_na = np.where(rs.to_data_frame()[["AF7"]].isna())[0][0]
         rs = nk.mne_crop(rs, smin=0, smax=first_na - 1)
+    if sub in ["sub-15"]:  # Take second half
+        last_na = np.where(rs.to_data_frame()[["AF7"]][0:800000].isna())[0][-1]
+        rs = nk.mne_crop(rs, smin=last_na, smax=None)
 
     # QC
     qc_rs_psd = qc_eeg(rs, sub, plot_psd=qc_rs_psd)
@@ -260,25 +272,40 @@ for sub in meta["participant_id"].values:
     # Heartbeat Evoked Potentials (HEP) -------------------------------------------------------
     print("  - RS - HEP")
 
-    rs_hep, out = analyze_hep(rs, ecg=rs["ECG"][0][0], ppg=rs["PPG_Muse"][0][0])
+    # Preprocess physio
+    ecg, _ = nk.bio_process(
+        ecg=rs["ECG"][0][0], ppg=rs["PPG_Muse"][0][0], sampling_rate=rs.info["sfreq"]
+    )
+
+    # Find R-peaks
+    events, _ = nk.events_to_mne(ecg["ECG_R_Peaks"].values.nonzero()[0])
+
+    rs_hep, out = analyze_hep(rs, events)
 
     # QC
-    qc_rs_ecg, qc_rs_ppg = qc_physio(
-        out["ecg"], sub, plot_ecg=qc_rs_ecg, plot_ppg=qc_rs_ppg
-    )
+    qc_rs_ecg, qc_rs_ppg = qc_physio(ecg, sub, plot_ecg=qc_rs_ecg, plot_ppg=qc_rs_ppg)
     qc_rs_hep = qc_hep(out["epochs"], out["autoreject_log"], sub, plot_hep=qc_rs_hep)
     qc_rs_heo = qc_heo(out["timefrequency"], out["itc"], sub, plot_heo=qc_rs_heo)
 
     # Add Features
     if sub not in ["sub-06", "sub-09"]:
-        dfsub = pd.concat([dfsub, rs_hep], axis=1)
+        dfsub = pd.concat([dfsub, rs_hep.add_prefix("RS_")], axis=1)
+        out["df"]["participant_id"] = sub
+        out["df"]["Condition"] = "RestingState"
+        df_hep = pd.concat([df_hep, out["df"]], axis=0)
 
     # Heartbeat Counting Task (HCT) ----------------------------------------------------------
     print("  - HCT - Preprocessing")
     # Open HCT file
     file = [file for file in os.listdir(path_eeg) if "HCT" in file]
-    file = path_eeg + [file for file in file if ".vhdr" in file][0]
+    file = path_eeg + [f for f in file if ".vhdr" in f][0]
     hct = mne.io.read_raw_brainvision(file, preload=True, verbose=False)
+
+    # Filter EEG
+    hct = hct.set_montage("standard_1020")
+    hct, _ = mne.set_eeg_reference(hct, ["TP9", "TP10"])
+    hct = hct.notch_filter(np.arange(50, 251, 50), picks="eeg")
+    hct = hct.filter(1, 40, picks="eeg")
 
     # Find events and crop just before (1 second +/-) first and after last
     events = nk.events_find(
@@ -288,6 +315,9 @@ for sub in meta["participant_id"].values:
     if sub in ["sub-13"]:
         start_end[0] = 2178
     hct = nk.mne_crop(hct, smin=start_end[0] - 2000, smax=start_end[1] + 2000)
+
+    qc_hct_psd = qc_eeg(hct, sub, plot_psd=qc_hct_psd)
+
     # Find events (again as data was cropped) and epoch
     events = nk.events_find(
         hct["PHOTO"][0][0], threshold_keep="below", duration_min=15000
@@ -296,6 +326,33 @@ for sub in meta["participant_id"].values:
 
     # HCT - HEP ------------------------------------------------------------------------------
     print("  - HCT - HEP")
+
+    # Preprocess physio
+    ecg, _ = nk.bio_process(
+        ecg=hct["ECG"][0][0], ppg=hct["PPG_Muse"][0][0], sampling_rate=hct.info["sfreq"]
+    )
+
+    # Find R-peaks
+    beats = ecg["ECG_R_Peaks"].values.nonzero()[0]
+    intervals = [[i, i + j] for i, j in zip(events["onset"], events["duration"])]
+    for i, b in enumerate(beats):
+        # If it's not in any interval, remove it
+        if not any([b >= j[0] and b <= j[1] for j in intervals]):
+            beats[i] = 0
+    beats = beats[beats != 0]
+
+    hct_hep, out = analyze_hep(hct, nk.events_to_mne(beats)[0])
+
+    # QC
+    qc_hct_hep = qc_hep(out["epochs"], out["autoreject_log"], sub, plot_hep=qc_hct_hep)
+    qc_hct_heo = qc_heo(out["timefrequency"], out["itc"], sub, plot_heo=qc_hct_heo)
+
+    # Add features
+    if sub not in ["sub-03"]:
+        dfsub = pd.concat([dfsub, hct_hep.add_prefix("HCT_")], axis=1)
+        out["df"]["participant_id"] = sub
+        out["df"]["Condition"] = "HCT"
+        df_hep = pd.concat([df_hep, out["df"]], axis=0)
 
     # HCT - Task -----------------------------------------------------------------------------
     print("  - HCT - Task")
@@ -318,7 +375,7 @@ for sub in meta["participant_id"].values:
 
     # Load behavioral data
     file = [file for file in os.listdir(path_beh) if "HCT" in file]
-    file = path_beh + [file for file in file if ".tsv" in file][0]
+    file = path_beh + [f for f in file if ".tsv" in f][0]
     hct_beh = pd.read_csv(file, sep="\t")
 
     # Count R peaks in each epoch
@@ -371,5 +428,11 @@ qc_hct_ecg = ill.image_mosaic(qc_hct_ecg, ncols=2, nrows="auto")
 qc_hct_ecg.save("figures/signals_qc_hct_ecg.png")
 qc_hct_ppg = ill.image_mosaic(qc_hct_ppg, ncols=2, nrows="auto")
 qc_hct_ppg.save("figures/signals_qc_hct_ppg.png")
+qc_hct_psd = ill.image_mosaic(qc_hct_psd, ncols=2, nrows="auto")
+qc_hct_psd.save("figures/signals_qc_hct_psd.png")
+qc_hct_hep = ill.image_mosaic(qc_hct_hep, ncols=2, nrows="auto")
+qc_hct_hep.save("figures/signals_qc_hct_hep.png")
+qc_hct_heo = ill.image_mosaic(qc_hct_heo, ncols=2, nrows="auto")
+qc_hct_heo.save("figures/signals_qc_hct_heo.png")
 
 print("Done!")

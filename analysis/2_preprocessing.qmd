@@ -46,7 +46,7 @@ df |>
 ```{r}
 df |>
     select(participant_id, starts_with("RS")) |>
-    pivot_longer(-participant_id, names_to = "Question", values_to = "Value")
+    pivot_longer(-participant_id, names_to = "Question", values_to = "Value") 
 ```
 
 
