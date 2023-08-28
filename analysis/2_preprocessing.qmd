@@ -5,6 +5,8 @@ editor:
     render-on-save: true
 execute:
   cache: true
+editor_options: 
+  chunk_output_type: console
 ---
 
 ## Descriptive Statistics
@@ -59,35 +61,51 @@ df |>
 #| label: fig-RS_HEP
 #| fig-cap: "Heartbeat Evoked Potential (HEP) for each participant during the resting state, overlayed over average ECG trace and PPG (infrared sensor on the forehead)."
 
-# df <- read.csv("../data/data_hep.csv") |>
-#     # filter(participant_id %in% c("sub-07")) |>
-#     mutate(time = time * 1000) |>
-#     group_by(participant_id) |>
-#     datawizard::standardize(select = c("AF7", "AF8")) |>
-#     ungroup()
+df <- read.csv("../data/data_hep.csv") |>
+    # filter(participant_id %in% c("sub-07")) |>
+  pivot_longer(c("AF7", "AF8"), names_to = "Channel", values_to = "EEG") |> 
+  mutate(time = time * 1000) |>
+  group_by(Condition, participant_id, Channel) |> 
+  datawizard::standardize(select = c("EEG", "PPG_Muse", "ECG")) |>
+  ungroup() 
 
-# av <- df |>
-#     select(-participant_id) |>
-#     group_by(time) |>
-#     summarise_all(mean) |>
-#     datawizard::rescale(select = c("ECG", "PPG_Muse"), to = c(-3, 3))
+av_eeg <- df |>
+    select(-participant_id) |>
+    group_by(Cluster, Condition, Channel, time) |>
+    summarise_all(list(Mean = mean, 
+                       CI_low = \(x) as.numeric(bayestestR::eti(x))[2],
+                       CI_high = \(x) as.numeric(bayestestR::eti(x))[3]))
 
-# df |>
-#     ggplot(aes(x = time, y = AF8)) +
-#     geom_vline(xintercept = 0, linetype = "dashed") +
-#     geom_ribbon(aes(xmin = 200, xmax = 400), fill = "#FFECB3") +
-#     geom_line(data = av, aes(y = PPG_Muse), color = "#9C27B0", linewidth = 2) +
-#     geom_line(data = av, aes(y = ECG), color = "#F44336", linewidth = 2) +
-#     geom_line(aes(group = participant_id), alpha = 0.2) +
-#     geom_line(data = av, color = "black", linewidth = 2) +
-#     scale_x_continuous(breaks = c(-200, 0, 200, 400, 600, 800), expand = c(0, 0)) +
-#     scale_y_continuous(expand = c(0.01, 0.01)) +
-#     labs(x = "Time relative to ECG R-peak (ms)", y = "EEG Amplitude (AF8)") +
-#     theme_modern() +
-#     theme(
-#         panel.grid.major.y = element_blank(),
-#         panel.grid.minor.y = element_blank()
-#     )
+av_ecg <- df |>
+    select(-participant_id, -Channel, -Cluster) |>
+    group_by(Condition, time) |>
+    summarise_all(mean)  |>
+    datawizard::rescale(select = c("ECG", "PPG_Muse"), to = c(-3, 3))
+
+df |>
+   # filter(color == "A") |> 
+    ggplot(aes(x = time, y = EEG)) +
+    geom_vline(xintercept = 0, linetype = "dashed") +
+    geom_hline(yintercept = 0) +
+    geom_ribbon(aes(xmin = 200, xmax = 400), fill = "#FFECB3") +
+    geom_line(data = av_ecg, aes(y = PPG_Muse), color = "#9C27B0", linewidth = 2, alpha=2/3) +
+    geom_line(data = av_ecg, aes(y = ECG), color = "#F44336", linewidth = 2, alpha=2/3) +
+    geom_line(aes(group = interaction(participant_id, Cluster, Channel), color = Cluster, linetype = Channel), alpha = 0.6, linewidth=0.1) +
+    geom_ribbon(data=av_eeg, aes(group=interaction(Channel, Cluster), y=EEG_Mean, ymin=EEG_CI_low, ymax=EEG_CI_high, fill = Cluster), alpha=0.1) +
+    geom_line(data = av_eeg, aes(y=EEG_Mean, color = Cluster, linetype = Channel), linewidth = 1) +
+    scale_x_continuous(breaks = c(-200, 0, 200, 400, 600, 800), expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0.01, 0.01)) +
+    scale_color_manual(values = c("N100" = "#FF9800", "P200" = "#2196F3")) +
+    scale_fill_manual(values = c("N100" = "#FF9800", "P200" = "#2196F3")) +
+    scale_linetype_manual(values = c("AF7" = "dotted", "AF8" = "solid")) +
+    # coord_cartesian(ylim = c(-2, 2)) +
+    labs(x = "Time relative to ECG R-peak (ms)", y = "EEG Amplitude (AF8)") +
+    theme_modern() +
+    theme(
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.y = element_blank()
+    ) +
+    facet_grid(~Condition)
 ```
 
 ```{r}
