@@ -25,11 +25,11 @@ def fig2img(fig):
     return img
 
 
-def qc_physio(df, sub, plot_ecg=[], plot_ppg=[]):
+def qc_physio(df, info, sub, plot_ecg=[], plot_ppg=[]):
     """Quality control (QC) of physiological signals."""
 
     # ECG ------------------------------------------------------------------------------------
-    nk.ecg_plot(df, sub, sampling_rate=2000)  # Save ECG plot
+    nk.ecg_plot(df, info)  # Save ECG plot
     fig = plt.gcf()
     img = ill.image_text(
         sub, color="black", size=100, x=-0.82, y=0.90, image=fig2img(fig)
@@ -38,7 +38,9 @@ def qc_physio(df, sub, plot_ecg=[], plot_ppg=[]):
     plot_ecg.append(img)
 
     # PPG ------------------------------------------------------------------------------------
-    fig = nk.ppg_segment(df["PPG_Clean"], sampling_rate=2000, show="return")
+    df["PPG_Raw"] = nk.rescale(df["PPG_Raw"], to=df["PPG_Clean"])
+    nk.ppg_plot(df, info)  # Save ECG plot
+    fig = plt.gcf()
     img = ill.image_text(
         sub, color="black", size=100, x=-0.82, y=0.90, image=fig2img(fig)
     )
@@ -209,7 +211,7 @@ qc_hct_hep = []
 qc_hct_heo = []
 
 
-# sub = "sub-03"
+# sub = "sub-19"
 # Loop through participants ==================================================================
 for sub in meta["participant_id"].values:
     # Print progress and comments
@@ -253,16 +255,16 @@ for sub in meta["participant_id"].values:
     rs = rs.set_montage("standard_1020")
     rs, _ = mne.set_eeg_reference(rs, ["TP9", "TP10"])
     rs = rs.notch_filter(np.arange(50, 251, 50), picks="eeg")
-    rs = rs.filter(1, 40, picks="eeg")
+    rs = rs.filter(1, 30, picks="eeg")
     rs = nk.mne_crop(
         rs, smin=events["onset"][0], smax=events["onset"][0] + events["duration"][0]
     )
 
     # Fix for recording interruption
-    if sub in ["sub-10"]:  # Cut till before the nan
+    if sub in ["sub-10", "sub-16", "sub-20"]:  # Cut till before the nan
         first_na = np.where(rs.to_data_frame()[["AF7"]].isna())[0][0]
         rs = nk.mne_crop(rs, smin=0, smax=first_na - 1)
-    if sub in ["sub-15"]:  # Take second half
+    if sub in ["sub-15", "sub-19"]:  # Take second half
         last_na = np.where(rs.to_data_frame()[["AF7"]][0:800000].isna())[0][-1]
         rs = nk.mne_crop(rs, smin=last_na, smax=None)
 
@@ -273,8 +275,10 @@ for sub in meta["participant_id"].values:
     print("  - RS - HEP")
 
     # Preprocess physio
-    ecg, _ = nk.bio_process(
-        ecg=rs["ECG"][0][0], ppg=rs["PPG_Muse"][0][0], sampling_rate=rs.info["sfreq"]
+    ecg, info = nk.bio_process(
+        ecg=rs["ECG"][0][0],
+        ppg=rs["PPG_Muse"][0][0],
+        sampling_rate=rs.info["sfreq"],
     )
 
     # Find R-peaks
@@ -283,7 +287,9 @@ for sub in meta["participant_id"].values:
     rs_hep, out = analyze_hep(rs, events)
 
     # QC
-    qc_rs_ecg, qc_rs_ppg = qc_physio(ecg, sub, plot_ecg=qc_rs_ecg, plot_ppg=qc_rs_ppg)
+    qc_rs_ecg, qc_rs_ppg = qc_physio(
+        ecg, info, sub, plot_ecg=qc_rs_ecg, plot_ppg=qc_rs_ppg
+    )
     qc_rs_hep = qc_hep(out["epochs"], out["autoreject_log"], sub, plot_hep=qc_rs_hep)
     qc_rs_heo = qc_heo(out["timefrequency"], out["itc"], sub, plot_heo=qc_rs_heo)
 
@@ -311,6 +317,9 @@ for sub in meta["participant_id"].values:
     events = nk.events_find(
         hct["PHOTO"][0][0], threshold_keep="below", duration_min=15000
     )
+    if sub in ["sub-16"]:
+        events["onset"] = events["onset"][0:-1]
+        events["duration"] = events["duration"][0:-1]
     start_end = [events["onset"][0], events["onset"][-1] + events["duration"][-1]]
     if sub in ["sub-13"]:
         start_end[0] = 2178
@@ -359,14 +368,14 @@ for sub in meta["participant_id"].values:
 
     # Process signals
     hct_physio = hct.to_data_frame()[["PHOTO", "ECG", "PPG_Muse"]]
-    hct_physio, _ = nk.bio_process(
+    hct_physio, info = nk.bio_process(
         ecg=hct_physio["ECG"].values,
         ppg=hct_physio["PPG_Muse"].values,
         sampling_rate=2000,
         keep=hct_physio["PHOTO"],
     )
     qc_hct_ecg, qc_hct_ppg = qc_physio(
-        hct_physio, sub, plot_ecg=qc_hct_ecg, plot_ppg=qc_hct_ppg
+        hct_physio, info, sub, plot_ecg=qc_hct_ecg, plot_ppg=qc_hct_ppg
     )
 
     epochs = nk.epochs_create(
@@ -395,6 +404,8 @@ for sub in meta["participant_id"].values:
     # Manual fixes (based on comments)
     if sub == "sub-07":
         hct_beh.loc[2, ["Confidence", "HCT_Accuracy"]] = np.nan
+    if sub == "sub-11":
+        hct_beh.loc[0:2, ["Confidence", "HCT_Accuracy"]] = np.nan
 
     # Compute interoception scores (Garfinkel et al., 2015)
     dfsub["HCT_Accuracy"] = np.mean(hct_beh["HCT_Accuracy"])
