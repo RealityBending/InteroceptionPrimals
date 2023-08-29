@@ -1,0 +1,260 @@
+---
+title: "Preprocessing"
+format: html
+editor:
+    render-on-save: true
+execute:
+  cache: true
+---
+
+## Descriptive Statistics
+```{r}
+#| output: false
+library(tidyverse)
+library(easystats)
+library(rstanarm)
+library(bayestestR)
+library(insight)
+library(see)
+library(corrplot)
+
+df <- read.csv("./data/data.csv")
+```
+### Participants
+```{r}
+report_participants(df, age = "Age", gender = "Gender", race = "Ethnicity")
+```
+
+### Tidy up raw data
+```{r}
+df <- df |>
+    mutate(IAS_TOTAL = (IAS_1 + IAS_2 + IAS_3 + IAS_4 + IAS_5 + IAS_6 + IAS_7 + IAS_8 + IAS_9 + IAS_10 + IAS_11 + IAS_12 + IAS_13 + IAS_14 +        IAS_15 + IAS_16 + IAS_17 + IAS_18 + IAS_19 + IAS_20 + IAS_21)/21)
+
+df <- df |>
+    mutate(MAIA_NOTIC = (MAIA_Noticing_1 + MAIA_Noticing_2 + MAIA_Noticing_3 + MAIA_Noticing_4)/4)
+```
+
+### Selecting relevant variables
+```{r}
+clean <- df |>
+    select(participant_id, IAS_TOTAL, MAIA_NOTIC, PI_Alive, PI_Understandable, PI_Hierarchical, HCT_Accuracy, HCT_Awareness, HCT_Sensibility)
+```
+
+### Safe cleaned data
+```{r}
+write.csv(clean, "./data/data_clean.csv")
+```
+
+### Bayes
+#### Posterior for PI-alive and HCT-accuracy
+```{r}
+modelaa <- stan_glm(PI_Alive ~ HCT_Accuracy, data = clean)
+
+posteriorsaa <- get_parameters(modelaa)
+
+head(posteriorsaa)
+
+ggplot(posteriorsaa, aes(x = HCT_Accuracy)) +
+  geom_density(fill = "orange")
+
+mean(posteriorsaa$HCT_Accuracy)
+
+median(posteriorsaa$HCT_Accuracy)
+
+map_estimate(posteriorsaa$HCT_Accuracy)
+
+ggplot(posteriorsaa, aes(x = HCT_Accuracy)) +
+  geom_density(fill = "orange") +
+  # The mean in blue
+  geom_vline(xintercept = mean(posteriorsaa$HCT_Accuracy), color = "blue", linewidth = 1) +
+  # The median in red
+  geom_vline(xintercept = median(posteriorsaa$HCT_Accuracy), color = "red", linewidth = 1) +
+  # The MAP in purple
+  geom_vline(xintercept = map_estimate(posteriorsaa$HCT_Accuracy), color = "purple", linewidth = 1)
+
+range(posteriorsaa$HCT_Accuracy)
+
+hdi(posteriorsaa$HCT_Accuracy, ci = 0.89)
+
+describe_posterior(modelaa, test = c("p_direction", "rope", "bayesfactor"))
+
+resultaa <- correlationBF(clean$PI_Alive, clean$HCT_Accuracy)
+describe_posterior(resultaa)
+```
+#### Posterior for PI-hierarchical and HCT-accuracy (result not ideal)
+```{r}
+modelha <- stan_glm(PI_Hierarchical ~ HCT_Accuracy, data = clean)
+
+posteriorsha <- get_parameters(modelha)
+
+head(posteriorsha)
+
+ggplot(posteriorsha, aes(x = HCT_Accuracy)) +
+  geom_density(fill = "orange")
+
+mean(posteriorsha$HCT_Accuracy)
+
+median(posteriorsha$HCT_Accuracy)
+
+map_estimate(posteriorsha$HCT_Accuracy)
+
+ggplot(posteriorsha, aes(x = HCT_Accuracy)) +
+  geom_density(fill = "orange") +
+  # The mean in blue
+  geom_vline(xintercept = mean(posteriorsha$HCT_Accuracy), color = "blue", linewidth = 1) +
+  # The median in red
+  geom_vline(xintercept = median(posteriorsha$HCT_Accuracy), color = "red", linewidth = 1) +
+  # The MAP in purple
+  geom_vline(xintercept = map_estimate(posteriorsha$HCT_Accuracy), color = "purple", linewidth = 1)
+
+range(posteriorsha$HCT_Accuracy)
+
+hdi(posteriorsha$HCT_Accuracy, ci = 0.89)
+
+describe_posterior(modelha, test = c("p_direction", "rope", "bayesfactor"))
+
+resultha <- correlationBF(clean$PI_Hierarchical, clean$HCT_Accuracy)
+describe_posterior(resultha)
+```
+
+#### Posterior for PI-understandable and HCT-accuracy (result not ideal)
+```{r}
+modelua <- stan_glm(PI_Understandable ~ HCT_Accuracy, data = clean)
+
+posteriorsua <- get_parameters(modelua)
+
+head(posteriorsua)
+
+ggplot(posteriorsua, aes(x = HCT_Accuracy)) +
+  geom_density(fill = "orange")
+
+mean(posteriorsua$HCT_Accuracy)
+
+median(posteriorsua$HCT_Accuracy)
+
+map_estimate(posteriorsua$HCT_Accuracy)
+
+ggplot(posteriorsua, aes(x = HCT_Accuracy)) +
+  geom_density(fill = "orange") +
+  # The mean in blue
+  geom_vline(xintercept = mean(posteriorsua$HCT_Accuracy), color = "blue", linewidth = 1) +
+  # The median in red
+  geom_vline(xintercept = median(posteriorsua$HCT_Accuracy), color = "red", linewidth = 1) +
+  # The MAP in purple
+  geom_vline(xintercept = map_estimate(posteriorsua$HCT_Accuracy), color = "purple", linewidth = 1)
+
+range(posteriorsua$HCT_Accuracy)
+
+hdi(posteriorsua$HCT_Accuracy, ci = 0.89)
+
+describe_posterior(modelha, test = c("p_direction", "rope", "bayesfactor"))
+
+resultha <- correlationBF(clean$PI_Understandable, clean$HCT_Accuracy)
+describe_posterior(resultha)
+```
+
+### Correlation tests
+#### IAS and HCT
+```{r}
+ih <- dplyr::select(clean, IAS_TOTAL, HCT_Accuracy, HCT_Awareness, HCT_Sensibility)
+ihplot <- correlation(ih)
+ihplot %>%
+  summary(redundant = TRUE) %>%
+  plot()
+```
+
+#### MAIA and HCT
+```{r}
+mh <- dplyr::select(clean, MAIA_NOTIC, HCT_Accuracy, HCT_Awareness, HCT_Sensibility)
+mhplot <- correlation(mh)
+mhplot %>%
+  summary(redundant = TRUE) %>%
+  plot()
+```
+
+#### MAIA and IAS
+```{r}
+mi <- dplyr::select(clean, MAIA_NOTIC, IAS_TOTAL)
+miplot <- correlation(mi)
+miplot %>%
+  summary(redundant = TRUE) %>%
+  plot()
+```
+
+#### MAIA and IAS and HCT
+```{r}
+mih <- dplyr::select(clean, MAIA_NOTIC, IAS_TOTAL, HCT_Accuracy, HCT_Awareness, HCT_Sensibility)
+mihplot <- correlation(mih)
+mihplot %>%
+  summary(redundant = TRUE) %>%
+  plot()
+
+cormih = cor(mih)
+corrplot(cormih, method = 'square', order = 'FPC', type = 'lower', diag = FALSE)
+```
+#### IAS and PI
+```{r}
+ip <- dplyr::select(clean, IAS_TOTAL, PI_Alive, PI_Understandable, PI_Hierarchical)
+ipplot <- correlation(ip)
+ipplot %>%
+  summary(redundant = TRUE) %>%
+  plot()
+```
+
+#### MAIA and PI
+```{r}
+mp <- dplyr::select(clean, MAIA_NOTIC, PI_Alive, PI_Understandable, PI_Hierarchical)
+mpplot <- correlation(mp)
+mpplot %>%
+  summary(redundant = TRUE) %>%
+  plot()
+```
+
+#### HCT and PI
+```{r}
+hp <- dplyr::select(clean, HCT_Accuracy, HCT_Awareness, HCT_Sensibility, PI_Alive, PI_Understandable, PI_Hierarchical)
+hpplot <- correlation(hp)
+hpplot %>%
+  summary(redundant = TRUE) %>%
+  plot()
+
+corhp = cor(hp)
+corrplot(corhp, method = 'square', order = 'FPC', type = 'lower', diag = FALSE)
+```
+
+#### Posterior for MAIA-noticing and HCT-awareness (since they both involves awareness of internal signals) (result not ideal)
+```{r}
+modelnoaw <- stan_glm(MAIA_NOTIC ~ HCT_Awareness, data = clean)
+
+posteriorsnoaw <- get_parameters(modelnoaw)
+
+head(posteriorsnoaw)
+
+ggplot(posteriorsnoaw, aes(x = HCT_Awareness)) +
+  geom_density(fill = "orange")
+
+mean(posteriorsnoaw$HCT_Awareness)
+
+median(posteriorsnoaw$HCT_Awareness)
+
+map_estimate(posteriorsnoaw$HCT_Awareness)
+
+ggplot(posteriorsnoaw, aes(x = HCT_Awareness)) +
+  geom_density(fill = "orange") +
+  # The mean in blue
+  geom_vline(xintercept = mean(posteriorsnoaw$HCT_Awareness), color = "blue", linewidth = 1) +
+  # The median in red
+  geom_vline(xintercept = median(posteriorsnoaw$HCT_Awareness), color = "red", linewidth = 1) +
+  # The MAP in purple
+  geom_vline(xintercept = map_estimate(posteriorsnoaw$HCT_Awareness), color = "purple", linewidth = 1)
+
+range(posteriorsnoaw$HCT_Awareness)
+
+hdi(posteriorsnoaw$HCT_Awareness, ci = 0.89)
+
+describe_posterior(modelnoaw, test = c("p_direction", "rope", "bayesfactor"))
+
+resultnoaw <- correlationBF(clean$MAIA_NOTIC, clean$HCT_Awareness)
+describe_posterior(resultnoaw)
+```
+
