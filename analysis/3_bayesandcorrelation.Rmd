@@ -1,13 +1,16 @@
 ---
-title: "Preprocessing"
+title: "Analysis"
 format: html
 editor:
     render-on-save: true
 execute:
   cache: true
+editor_options: 
+  chunk_output_type: console
 ---
 
-## Descriptive Statistics
+## Methods
+
 ```{r}
 #| output: false
 library(tidyverse)
@@ -18,35 +21,95 @@ library(insight)
 library(see)
 library(corrplot)
 
-df <- read.csv("./data/data.csv")
+df <- read.csv("../data/data.csv") |>
+  mutate(IAS_TOTAL = (IAS_1 + IAS_2 + IAS_3 + IAS_4 + IAS_5 + IAS_6 + IAS_7 + IAS_8 + IAS_9 + IAS_10 + IAS_11 + IAS_12 + IAS_13 + IAS_14 + IAS_15 + IAS_16 + IAS_17 + IAS_18 + IAS_19 + IAS_20 + IAS_21) / 21)
 ```
+
 ### Participants
+
 ```{r}
 report_participants(df, age = "Age", gender = "Gender", race = "Ethnicity")
 ```
 
-### Tidy up raw data
-```{r}
-df <- df |>
-    mutate(IAS_TOTAL = (IAS_1 + IAS_2 + IAS_3 + IAS_4 + IAS_5 + IAS_6 + IAS_7 + IAS_8 + IAS_9 + IAS_10 + IAS_11 + IAS_12 + IAS_13 + IAS_14 +        IAS_15 + IAS_16 + IAS_17 + IAS_18 + IAS_19 + IAS_20 + IAS_21)/21)
 
-df <- df |>
-    mutate(MAIA_NOTIC = (MAIA_Noticing_1 + MAIA_Noticing_2 + MAIA_Noticing_3 + MAIA_Noticing_4)/4)
-```
-
-### Selecting relevant variables
 ```{r}
 clean <- df |>
-    select(participant_id, IAS_TOTAL, MAIA_NOTIC, PI_Alive, PI_Understandable, PI_Hierarchical, HCT_Accuracy, HCT_Awareness, HCT_Sensibility)
+  select(participant_id, IAS_TOTAL, MAIA_Noticing, PI_Alive, PI_Understandable, PI_Hierarchical, HCT_Accuracy, HCT_Awareness, HCT_Sensibility)
 ```
 
-### Safe cleaned data
+
+## Results
+
+### Correlation between Interoceptive Measures
+
 ```{r}
-write.csv(clean, "./data/data_clean.csv")
+r <- clean |> 
+  select(-starts_with("PI_"), -participant_id) |> 
+  correlation(bayesian = TRUE)
+
+r |> 
+  summary(redundant = TRUE) |> 
+  cor_sort() |> 
+  plot()
 ```
+
+### Correlation between Primal Beliefs
+
+
+```{r}
+r <- clean |> 
+  select(starts_with("PI_")) |> 
+  correlation(bayesian = TRUE)
+
+r %>%
+  summary(redundant = TRUE) |> 
+  cor_sort() |> 
+  plot()
+```
+
+### Correlation between Interoception and Primals
+
+```{r}
+r <- correlation(select(clean, starts_with("PI_")), 
+                 select(clean, starts_with("MAIA_"), starts_with("HCT_"), starts_with("IAS")),
+                 bayesian = TRUE) |> 
+  arrange(desc(BF))
+r
+
+r %>%
+  summary() |> 
+  plot()
+```
+
+
+```{r}
+# Plot scatter plot (i.e., detailed pattern) for selected correlations
+cor_test(clean, "PI_Alive", "HCT_Sensibility", bayesian=TRUE) |> 
+  plot()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Old
+
+
 
 ### Bayes
+
 #### Posterior for PI-alive and HCT-accuracy
+
 ```{r}
 modelaa <- stan_glm(PI_Alive ~ HCT_Accuracy, data = clean)
 
@@ -81,6 +144,7 @@ describe_posterior(modelaa, test = c("p_direction", "rope", "bayesfactor"))
 resultaa <- correlationBF(clean$PI_Alive, clean$HCT_Accuracy)
 describe_posterior(resultaa)
 ```
+
 #### Posterior for PI-hierarchical and HCT-accuracy (result not ideal)
 ```{r}
 modelha <- stan_glm(PI_Hierarchical ~ HCT_Accuracy, data = clean)
@@ -118,6 +182,7 @@ describe_posterior(resultha)
 ```
 
 #### Posterior for PI-understandable and HCT-accuracy (result not ideal)
+
 ```{r}
 modelua <- stan_glm(PI_Understandable ~ HCT_Accuracy, data = clean)
 
@@ -165,7 +230,7 @@ ihplot %>%
 
 #### MAIA and HCT
 ```{r}
-mh <- dplyr::select(clean, MAIA_NOTIC, HCT_Accuracy, HCT_Awareness, HCT_Sensibility)
+mh <- dplyr::select(clean, MAIA_Noticing, HCT_Accuracy, HCT_Awareness, HCT_Sensibility)
 mhplot <- correlation(mh)
 mhplot %>%
   summary(redundant = TRUE) %>%
@@ -174,7 +239,7 @@ mhplot %>%
 
 #### MAIA and IAS
 ```{r}
-mi <- dplyr::select(clean, MAIA_NOTIC, IAS_TOTAL)
+mi <- dplyr::select(clean, MAIA_Noticing, IAS_TOTAL)
 miplot <- correlation(mi)
 miplot %>%
   summary(redundant = TRUE) %>%
@@ -183,14 +248,14 @@ miplot %>%
 
 #### MAIA and IAS and HCT
 ```{r}
-mih <- dplyr::select(clean, MAIA_NOTIC, IAS_TOTAL, HCT_Accuracy, HCT_Awareness, HCT_Sensibility)
+mih <- dplyr::select(clean, MAIA_Noticing, IAS_TOTAL, HCT_Accuracy, HCT_Awareness, HCT_Sensibility)
 mihplot <- correlation(mih)
 mihplot %>%
   summary(redundant = TRUE) %>%
   plot()
 
-cormih = cor(mih)
-corrplot(cormih, method = 'square', order = 'FPC', type = 'lower', diag = FALSE)
+cormih <- cor(mih)
+corrplot(cormih, method = "square", order = "FPC", type = "lower", diag = FALSE)
 ```
 #### IAS and PI
 ```{r}
@@ -203,7 +268,7 @@ ipplot %>%
 
 #### MAIA and PI
 ```{r}
-mp <- dplyr::select(clean, MAIA_NOTIC, PI_Alive, PI_Understandable, PI_Hierarchical)
+mp <- dplyr::select(clean, MAIA_Noticing, PI_Alive, PI_Understandable, PI_Hierarchical)
 mpplot <- correlation(mp)
 mpplot %>%
   summary(redundant = TRUE) %>%
@@ -218,13 +283,13 @@ hpplot %>%
   summary(redundant = TRUE) %>%
   plot()
 
-corhp = cor(hp)
-corrplot(corhp, method = 'square', order = 'FPC', type = 'lower', diag = FALSE)
+corhp <- cor(hp)
+corrplot(corhp, method = "square", order = "FPC", type = "lower", diag = FALSE)
 ```
 
 #### Posterior for MAIA-noticing and HCT-awareness (since they both involves awareness of internal signals) (result not ideal)
 ```{r}
-modelnoaw <- stan_glm(MAIA_NOTIC ~ HCT_Awareness, data = clean)
+modelnoaw <- stan_glm(MAIA_Noticing ~ HCT_Awareness, data = clean)
 
 posteriorsnoaw <- get_parameters(modelnoaw)
 
@@ -254,7 +319,7 @@ hdi(posteriorsnoaw$HCT_Awareness, ci = 0.89)
 
 describe_posterior(modelnoaw, test = c("p_direction", "rope", "bayesfactor"))
 
-resultnoaw <- correlationBF(clean$MAIA_NOTIC, clean$HCT_Awareness)
+resultnoaw <- correlationBF(clean$MAIA_Noticing, clean$HCT_Awareness)
 describe_posterior(resultnoaw)
 ```
 
