@@ -138,6 +138,9 @@ def analyze_hep(raw, events):
         preload=True,
     )
 
+    # Remove epochs with missing data
+    epochs = epochs.drop([np.isnan(e).any() for e in epochs])
+
     # Autoreject
     try:
         ar = autoreject.AutoReject(verbose=False, picks="eeg")
@@ -168,10 +171,11 @@ def analyze_hep(raw, events):
         rez[f"HEP_Amplitude_400_600_{ch}"] = hep2[ch].mean()
 
     # Compute Time-frequency Power
-    freqs = np.logspace(*np.log10([6, 30]), num=8)  # freqs of interest (log-spaced)
+    freqs = np.logspace(*np.log10([6, 60]), num=16)  # freqs of interest (log-spaced)
     n_cycles = freqs / 2.0  # different number of cycle per frequency
     power, itc = mne.time_frequency.tfr_morlet(
         epochs,
+        picks=["AF7", "AF8"],
         freqs=freqs,
         n_cycles=n_cycles,
         use_fft=True,
@@ -182,6 +186,7 @@ def analyze_hep(raw, events):
 
     # Compute HEO Features
     # power.to_data_frame()
+    # power.plot()
 
     return rez, out
 
@@ -198,6 +203,7 @@ meta = pd.read_csv(path + "participants.tsv", sep="\t")
 # Initialize variables
 df = pd.DataFrame()
 df_hep = pd.DataFrame()
+df_tap = pd.DataFrame()
 
 qc_rs_psd = []
 qc_rs_ecg = []
@@ -213,7 +219,7 @@ qc_hct_heo = []
 
 # sub = "sub-19"
 # Loop through participants ==================================================================
-for sub in meta["participant_id"].values:
+for sub in meta["participant_id"].values[0::]:
     # Print progress and comments
     print(sub)
     print("  * " + meta[meta["participant_id"] == sub]["Comments"].values[0])
@@ -255,7 +261,7 @@ for sub in meta["participant_id"].values:
     rs = rs.set_montage("standard_1020")
     rs, _ = mne.set_eeg_reference(rs, ["TP9", "TP10"])
     rs = rs.notch_filter(np.arange(50, 251, 50), picks="eeg")
-    rs = rs.filter(1, 30, picks="eeg")
+    rs = rs.filter(1, 60, picks="eeg")
     rs = nk.mne_crop(
         rs, smin=events["onset"][0], smax=events["onset"][0] + events["duration"][0]
     )
@@ -300,7 +306,128 @@ for sub in meta["participant_id"].values:
         out["df"]["Condition"] = "RestingState"
         df_hep = pd.concat([df_hep, out["df"]], axis=0)
 
-    # Heartbeat Counting Task (HCT) ----------------------------------------------------------
+    # Tapping Task ===========================================================================
+    print("  - TAP - Preprocessing")
+    if sub in ["sub-09"]:
+        print("    - WARNING: Skipping TAP for this participant (No ECG).")
+        continue
+
+    # Open TAP file
+    file = [file for file in os.listdir(path_eeg) if "TAP" in file]
+    file = path_eeg + [f for f in file if ".vhdr" in f][0]
+    tap = mne.io.read_raw_brainvision(file, preload=True, verbose=False)
+
+    # Load behavioral data
+    file = [file for file in os.listdir(path_beh) if "TAP" in file]
+    file = path_beh + [f for f in file if ".tsv" in f][0]
+    tap_beh = pd.read_csv(file, sep="\t")
+
+    # Find events and crop just before (1 second +/-) first and after last
+    events = nk.events_find(
+        tap["PHOTO"][0][0],
+        threshold_keep="below",
+        duration_min=50,
+        duration_max=500,
+    )
+    # In milliseconds (= /2 for 2000 Hz)
+    onsets_photo = events["onset"] / (tap.info["sfreq"] / 1000)
+
+    # If long first event, remove it
+    if (len(onsets_photo) == 421) & (
+        np.diff(onsets_photo)[0] > np.mean(np.diff(onsets_photo)[1:61]) * 3
+    ):
+        onsets_photo = onsets_photo[1::]
+
+    # Manual fix
+    # plt.vlines(onsets_photo, 0, 1, color="blue")
+    # plt.vlines(tap_beh["Tapping_Times"].values + onsets_photo[0], 1, 2, color="red")
+    if sub in ["sub-01", "sub-17", "sub-22"]:
+        onsets_photo = onsets_photo[1::]
+
+    if len(onsets_photo) != 420:
+        print(f"    - WARNING: Number of events is not 420 ({len(onsets_photo)})")
+
+    # Correct for delay between photo and behavioral data
+    onsets_beh = tap_beh["Tapping_Times"].values + onsets_photo[0]
+
+    # Compute correlation
+    if scipy.stats.pearsonr(onsets_photo, onsets_beh)[0] < 0.999:
+        # plt.scatter(onsets_beh, onsets_photo)
+        print(f"    - WARNING: Correlation between photo and beh onsets is low.")
+
+    # Preprocess physio
+    bio = tap.to_data_frame().bfill()  # Backfill missing values at the beginning
+    bio, info = nk.bio_process(
+        ecg=bio["ECG"].values,
+        ppg=bio["PPG_Muse"].values,
+        rsp=bio["RSP"].values,
+        sampling_rate=tap.info["sfreq"],
+    )
+
+    # Epoch around each tap
+    epochs = nk.epochs_create(
+        bio,
+        onsets_beh,
+        sampling_rate=tap.info["sfreq"],
+        epochs_start=-4,
+        epochs_end=4,
+    )
+
+    # Closest R-peak to each tap
+    dat = pd.DataFrame()  # Initialize dataframe
+    for _, e in epochs.items():
+        # Filter df at 0
+        at_index = e.iloc[np.argmin(np.abs(e.index)), :]
+        # R-peaks
+        rpeaks = e[e["ECG_R_Peaks"] == 1].index.values
+        r = np.nan if len(rpeaks) == 0 else rpeaks[np.argmin(np.abs(rpeaks))]
+        r_pre = np.nan if sum(rpeaks < 0) == 0 else np.max(rpeaks[rpeaks < 0])
+        r_post = np.nan if sum(rpeaks >= 0) == 0 else np.min(rpeaks[rpeaks >= 0])
+        # RSP - peaks
+        p = e[e["RSP_Peaks"] == 1].index.values
+        rsp_peak = np.nan if len(p) == 0 else p[np.argmin(np.abs(p))]
+        rsp_pre = np.nan if sum(p < 0) == 0 else np.max(p[p < 0])
+        rsp_post = np.nan if sum(p >= 0) == 0 else np.min(p[p >= 0])
+        # RSP - troughs
+        t = e[e["RSP_Troughs"] == 1].index.values
+        rsp_trough = np.nan if len(t) == 0 else t[np.argmin(np.abs(t))]
+        rsp_trough_pre = np.nan if sum(t < 0) == 0 else np.max(t[t < 0])
+        rsp_trough_post = np.nan if sum(t >= 0) == 0 else np.min(t[t >= 0])
+
+        dat = pd.concat(
+            [
+                dat,
+                pd.DataFrame(
+                    {
+                        "Closest_R": r,
+                        "Closest_R_Pre": r_pre,
+                        "Closest_R_Post": r_post,
+                        "ECG_Phase_Atrial": at_index["ECG_Phase_Atrial"],
+                        "ECG_Phase_Ventricular": at_index["ECG_Phase_Ventricular"],
+                        "Closest_RSP_Peak": rsp_peak,
+                        "Closest_RSP_Peak_Pre": rsp_pre,
+                        "Closest_RSP_Peak_Post": rsp_post,
+                        "Closest_RSP_Trough": rsp_trough,
+                        "Closest_RSP_Trough_Pre": rsp_trough_pre,
+                        "Closest_RSP_Trough_Post": rsp_trough_post,
+                        "RSP_Phase": at_index["RSP_Phase"],
+                        "RSP_Phase_Completion": at_index["RSP_Phase_Completion"],
+                    },
+                    index=[0],
+                ),
+            ],
+            axis=0,
+        )
+
+    # TODO: HEP amplitude of closest (pre) R-peak
+
+    # Merge with behavioral data
+    dat = pd.concat([tap_beh, dat.reset_index(drop=True)], axis=1)
+    df_tap = pd.concat([df_tap, dat], axis=0)
+
+    # Heartbeat Counting Task (HCT) ===========================================================
+
+    # Preprocessing --------------------------------------------------------------------------
     print("  - HCT - Preprocessing")
     # Open HCT file
     file = [file for file in os.listdir(path_eeg) if "HCT" in file]
@@ -311,7 +438,7 @@ for sub in meta["participant_id"].values:
     hct = hct.set_montage("standard_1020")
     hct, _ = mne.set_eeg_reference(hct, ["TP9", "TP10"])
     hct = hct.notch_filter(np.arange(50, 251, 50), picks="eeg")
-    hct = hct.filter(1, 40, picks="eeg")
+    hct = hct.filter(1, 60, picks="eeg")
 
     # Find events and crop just before (1 second +/-) first and after last
     events = nk.events_find(
@@ -420,9 +547,10 @@ for sub in meta["participant_id"].values:
 # Clean up and Save data
 df = pd.merge(meta, df)
 # Keep only columns that do not end with number or _R
-# df = df.filter(regex="^(?!.*[0-9]$)(?!.*_R$).*")
+df = df.filter(regex="^(?!.*[0-9]$)(?!.*_R$).*")
 df.to_csv("../data/data.csv", index=False)
 df_hep.to_csv("../data/data_hep.csv", index=False)
+df_tap.to_csv("../data/data_tap.csv", index=False)
 
 # Save figures
 qc_rs_psd = ill.image_mosaic(qc_rs_psd, ncols=2, nrows="auto")
