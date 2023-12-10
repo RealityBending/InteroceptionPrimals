@@ -233,78 +233,78 @@ for sub in meta["participant_id"].values[0::]:
     file = path_beh + [f for f in file if ".tsv" in f][0]
     dfsub = pd.read_csv(file, sep="\t")
 
-    # Resting State ==========================================================================
+    # # Resting State ==========================================================================
 
-    # Preprocessing --------------------------------------------------------------------------
-    print("  - RS - Preprocessing")
+    # # Preprocessing --------------------------------------------------------------------------
+    # print("  - RS - Preprocessing")
 
-    # Open RS assessment
-    file = [file for file in os.listdir(path_beh) if "RS" in file]
-    file = path_beh + [f for f in file if ".tsv" in f][0]
-    rs_beh = pd.read_csv(file, sep="\t").drop(["participant_id"], axis=1)
-    dfsub = pd.concat([dfsub, rs_beh.add_prefix("RS_")], axis=1)
+    # # Open RS assessment
+    # file = [file for file in os.listdir(path_beh) if "RS" in file]
+    # file = path_beh + [f for f in file if ".tsv" in f][0]
+    # rs_beh = pd.read_csv(file, sep="\t").drop(["participant_id"], axis=1)
+    # dfsub = pd.concat([dfsub, rs_beh.add_prefix("RS_")], axis=1)
 
-    # Open RS file
-    file = [file for file in os.listdir(path_eeg) if "RS" in file]
-    file = path_eeg + [f for f in file if ".vhdr" in f][0]
-    rs = mne.io.read_raw_brainvision(file, preload=True)
+    # # Open RS file
+    # file = [file for file in os.listdir(path_eeg) if "RS" in file]
+    # file = path_eeg + [f for f in file if ".vhdr" in f][0]
+    # rs = mne.io.read_raw_brainvision(file, preload=True)
 
-    # Detect onset of RS
-    events = nk.events_find(
-        rs.to_data_frame()["PHOTO"],
-        threshold_keep="below",
-        duration_min=int(rs.info["sfreq"] * 5),
-    )
-    assert len(events["onset"]) == 1  # Check that there is only one event
+    # # Detect onset of RS
+    # events = nk.events_find(
+    #     rs.to_data_frame()["PHOTO"],
+    #     threshold_keep="below",
+    #     duration_min=int(rs.info["sfreq"] * 5),
+    # )
+    # assert len(events["onset"]) == 1  # Check that there is only one event
 
-    # Filter EEG
-    rs = rs.set_montage("standard_1020")
-    rs, _ = mne.set_eeg_reference(rs, ["TP9", "TP10"])
-    rs = rs.notch_filter(np.arange(50, 251, 50), picks="eeg")
-    rs = rs.filter(1, 60, picks="eeg")
-    rs = nk.mne_crop(
-        rs, smin=events["onset"][0], smax=events["onset"][0] + events["duration"][0]
-    )
+    # # Filter EEG
+    # rs = rs.set_montage("standard_1020")
+    # rs, _ = mne.set_eeg_reference(rs, ["TP9", "TP10"])
+    # rs = rs.notch_filter(np.arange(50, 251, 50), picks="eeg")
+    # rs = rs.filter(1, 60, picks="eeg")
+    # rs = nk.mne_crop(
+    #     rs, smin=events["onset"][0], smax=events["onset"][0] + events["duration"][0]
+    # )
 
-    # Fix for recording interruption
-    if sub in ["sub-10", "sub-16", "sub-20"]:  # Cut till before the nan
-        first_na = np.where(rs.to_data_frame()[["AF7"]].isna())[0][0]
-        rs = nk.mne_crop(rs, smin=0, smax=first_na - 1)
-    if sub in ["sub-15", "sub-19"]:  # Take second half
-        last_na = np.where(rs.to_data_frame()[["AF7"]][0:800000].isna())[0][-1]
-        rs = nk.mne_crop(rs, smin=last_na, smax=None)
+    # # Fix for recording interruption
+    # if sub in ["sub-10", "sub-16", "sub-20"]:  # Cut till before the nan
+    #     first_na = np.where(rs.to_data_frame()[["AF7"]].isna())[0][0]
+    #     rs = nk.mne_crop(rs, smin=0, smax=first_na - 1)
+    # if sub in ["sub-15", "sub-19"]:  # Take second half
+    #     last_na = np.where(rs.to_data_frame()[["AF7"]][0:800000].isna())[0][-1]
+    #     rs = nk.mne_crop(rs, smin=last_na, smax=None)
 
-    # QC
-    qc_rs_psd = qc_eeg(rs, sub, plot_psd=qc_rs_psd)
+    # # QC
+    # qc_rs_psd = qc_eeg(rs, sub, plot_psd=qc_rs_psd)
 
-    # Heartbeat Evoked Potentials (HEP) -------------------------------------------------------
-    print("  - RS - HEP")
+    # # Heartbeat Evoked Potentials (HEP) -------------------------------------------------------
+    # print("  - RS - HEP")
 
-    # Preprocess physio
-    ecg, info = nk.bio_process(
-        ecg=rs["ECG"][0][0],
-        ppg=rs["PPG_Muse"][0][0],
-        sampling_rate=rs.info["sfreq"],
-    )
+    # # Preprocess physio
+    # ecg, info = nk.bio_process(
+    #     ecg=rs["ECG"][0][0],
+    #     ppg=rs["PPG_Muse"][0][0],
+    #     sampling_rate=rs.info["sfreq"],
+    # )
 
-    # Find R-peaks
-    events, _ = nk.events_to_mne(ecg["ECG_R_Peaks"].values.nonzero()[0])
+    # # Find R-peaks
+    # events, _ = nk.events_to_mne(ecg["ECG_R_Peaks"].values.nonzero()[0])
 
-    rs_hep, out = analyze_hep(rs, events)
+    # rs_hep, out = analyze_hep(rs, events)
 
-    # QC
-    qc_rs_ecg, qc_rs_ppg = qc_physio(
-        ecg, info, sub, plot_ecg=qc_rs_ecg, plot_ppg=qc_rs_ppg
-    )
-    qc_rs_hep = qc_hep(out["epochs"], out["autoreject_log"], sub, plot_hep=qc_rs_hep)
-    qc_rs_heo = qc_heo(out["timefrequency"], out["itc"], sub, plot_heo=qc_rs_heo)
+    # # QC
+    # qc_rs_ecg, qc_rs_ppg = qc_physio(
+    #     ecg, info, sub, plot_ecg=qc_rs_ecg, plot_ppg=qc_rs_ppg
+    # )
+    # qc_rs_hep = qc_hep(out["epochs"], out["autoreject_log"], sub, plot_hep=qc_rs_hep)
+    # qc_rs_heo = qc_heo(out["timefrequency"], out["itc"], sub, plot_heo=qc_rs_heo)
 
-    # Add Features
-    if sub not in ["sub-06", "sub-09"]:
-        dfsub = pd.concat([dfsub, rs_hep.add_prefix("RS_")], axis=1)
-        out["df"]["participant_id"] = sub
-        out["df"]["Condition"] = "RestingState"
-        df_hep = pd.concat([df_hep, out["df"]], axis=0)
+    # # Add Features
+    # if sub not in ["sub-06", "sub-09"]:
+    #     dfsub = pd.concat([dfsub, rs_hep.add_prefix("RS_")], axis=1)
+    #     out["df"]["participant_id"] = sub
+    #     out["df"]["Condition"] = "RestingState"
+    #     df_hep = pd.concat([df_hep, out["df"]], axis=0)
 
     # Tapping Task ===========================================================================
     print("  - TAP - Preprocessing")
@@ -367,7 +367,7 @@ for sub in meta["participant_id"].values[0::]:
     # Epoch around each tap
     epochs = nk.epochs_create(
         bio,
-        onsets_beh,
+        onsets_beh,  # onsets_photo
         sampling_rate=tap.info["sfreq"],
         epochs_start=-4,
         epochs_end=4,
@@ -399,6 +399,7 @@ for sub in meta["participant_id"].values[0::]:
                 dat,
                 pd.DataFrame(
                     {
+                        "ECG_Rate": at_index["ECG_Rate"],
                         "Closest_R": r,
                         "Closest_R_Pre": r_pre,
                         "Closest_R_Post": r_post,
@@ -421,135 +422,148 @@ for sub in meta["participant_id"].values[0::]:
 
     # TODO: HEP amplitude of closest (pre) R-peak
 
+    # Compute tapping rate
+    tap_beh["Tapping_Rate"] = np.nan
+    for cond in tap_beh["Condition"].unique():
+        tap_times = tap_beh[tap_beh["Condition"] == cond]["Tapping_Times"].values
+        rate = nk.signal_rate(
+            tap_times,
+            sampling_rate=1000,
+            show=False,
+            interpolation_method="monotone_cubic",
+        )
+        tap_beh.loc[tap_beh["Condition"] == cond, "Tapping_Rate"] = rate
+
+
     # Merge with behavioral data
     dat = pd.concat([tap_beh, dat.reset_index(drop=True)], axis=1)
     df_tap = pd.concat([df_tap, dat], axis=0)
 
-    # Heartbeat Counting Task (HCT) ===========================================================
+#     # Heartbeat Counting Task (HCT) ===========================================================
 
-    # Preprocessing --------------------------------------------------------------------------
-    print("  - HCT - Preprocessing")
-    # Open HCT file
-    file = [file for file in os.listdir(path_eeg) if "HCT" in file]
-    file = path_eeg + [f for f in file if ".vhdr" in f][0]
-    hct = mne.io.read_raw_brainvision(file, preload=True, verbose=False)
+#     # Preprocessing --------------------------------------------------------------------------
+#     print("  - HCT - Preprocessing")
+#     # Open HCT file
+#     file = [file for file in os.listdir(path_eeg) if "HCT" in file]
+#     file = path_eeg + [f for f in file if ".vhdr" in f][0]
+#     hct = mne.io.read_raw_brainvision(file, preload=True, verbose=False)
 
-    # Filter EEG
-    hct = hct.set_montage("standard_1020")
-    hct, _ = mne.set_eeg_reference(hct, ["TP9", "TP10"])
-    hct = hct.notch_filter(np.arange(50, 251, 50), picks="eeg")
-    hct = hct.filter(1, 60, picks="eeg")
+#     # Filter EEG
+#     hct = hct.set_montage("standard_1020")
+#     hct, _ = mne.set_eeg_reference(hct, ["TP9", "TP10"])
+#     hct = hct.notch_filter(np.arange(50, 251, 50), picks="eeg")
+#     hct = hct.filter(1, 60, picks="eeg")
 
-    # Find events and crop just before (1 second +/-) first and after last
-    events = nk.events_find(
-        hct["PHOTO"][0][0], threshold_keep="below", duration_min=15000
-    )
-    if sub in ["sub-16"]:
-        events["onset"] = events["onset"][0:-1]
-        events["duration"] = events["duration"][0:-1]
-    start_end = [events["onset"][0], events["onset"][-1] + events["duration"][-1]]
-    if sub in ["sub-13"]:
-        start_end[0] = 2178
-    hct = nk.mne_crop(hct, smin=start_end[0] - 2000, smax=start_end[1] + 2000)
+#     # Find events and crop just before (1 second +/-) first and after last
+#     events = nk.events_find(
+#         hct["PHOTO"][0][0], threshold_keep="below", duration_min=15000
+#     )
+#     if sub in ["sub-16"]:
+#         events["onset"] = events["onset"][0:-1]
+#         events["duration"] = events["duration"][0:-1]
+#     start_end = [events["onset"][0], events["onset"][-1] + events["duration"][-1]]
+#     if sub in ["sub-13"]:
+#         start_end[0] = 2178
+#     hct = nk.mne_crop(hct, smin=start_end[0] - 2000, smax=start_end[1] + 2000)
 
-    qc_hct_psd = qc_eeg(hct, sub, plot_psd=qc_hct_psd)
+#     qc_hct_psd = qc_eeg(hct, sub, plot_psd=qc_hct_psd)
 
-    # Find events (again as data was cropped) and epoch
-    events = nk.events_find(
-        hct["PHOTO"][0][0], threshold_keep="below", duration_min=15000
-    )
-    assert len(events["onset"]) == 6  # Check that there are 6 epochs (the 6 intervals)
+#     # Find events (again as data was cropped) and epoch
+#     events = nk.events_find(
+#         hct["PHOTO"][0][0], threshold_keep="below", duration_min=15000
+#     )
+#     assert len(events["onset"]) == 6  # Check that there are 6 epochs (the 6 intervals)
 
-    # HCT - HEP ------------------------------------------------------------------------------
-    print("  - HCT - HEP")
+#     # HCT - HEP ------------------------------------------------------------------------------
+#     print("  - HCT - HEP")
 
-    # Preprocess physio
-    ecg, _ = nk.bio_process(
-        ecg=hct["ECG"][0][0], ppg=hct["PPG_Muse"][0][0], sampling_rate=hct.info["sfreq"]
-    )
+#     # Preprocess physio
+#     ecg, _ = nk.bio_process(
+#         ecg=hct["ECG"][0][0], ppg=hct["PPG_Muse"][0][0], sampling_rate=hct.info["sfreq"]
+#     )
 
-    # Find R-peaks
-    beats = ecg["ECG_R_Peaks"].values.nonzero()[0]
-    intervals = [[i, i + j] for i, j in zip(events["onset"], events["duration"])]
-    for i, b in enumerate(beats):
-        # If it's not in any interval, remove it
-        if not any([b >= j[0] and b <= j[1] for j in intervals]):
-            beats[i] = 0
-    beats = beats[beats != 0]
+#     # Find R-peaks
+#     beats = ecg["ECG_R_Peaks"].values.nonzero()[0]
+#     intervals = [[i, i + j] for i, j in zip(events["onset"], events["duration"])]
+#     for i, b in enumerate(beats):
+#         # If it's not in any interval, remove it
+#         if not any([b >= j[0] and b <= j[1] for j in intervals]):
+#             beats[i] = 0
+#     beats = beats[beats != 0]
 
-    hct_hep, out = analyze_hep(hct, nk.events_to_mne(beats)[0])
+#     hct_hep, out = analyze_hep(hct, nk.events_to_mne(beats)[0])
 
-    # QC
-    qc_hct_hep = qc_hep(out["epochs"], out["autoreject_log"], sub, plot_hep=qc_hct_hep)
-    qc_hct_heo = qc_heo(out["timefrequency"], out["itc"], sub, plot_heo=qc_hct_heo)
+#     # QC
+#     qc_hct_hep = qc_hep(out["epochs"], out["autoreject_log"], sub, plot_hep=qc_hct_hep)
+#     qc_hct_heo = qc_heo(out["timefrequency"], out["itc"], sub, plot_heo=qc_hct_heo)
 
-    # Add features
-    if sub not in ["sub-03"]:
-        dfsub = pd.concat([dfsub, hct_hep.add_prefix("HCT_")], axis=1)
-        out["df"]["participant_id"] = sub
-        out["df"]["Condition"] = "HCT"
-        df_hep = pd.concat([df_hep, out["df"]], axis=0)
+#     # Add features
+#     if sub not in ["sub-03"]:
+#         dfsub = pd.concat([dfsub, hct_hep.add_prefix("HCT_")], axis=1)
+#         out["df"]["participant_id"] = sub
+#         out["df"]["Condition"] = "HCT"
+#         df_hep = pd.concat([df_hep, out["df"]], axis=0)
 
-    # HCT - Task -----------------------------------------------------------------------------
-    print("  - HCT - Task")
+#     # HCT - Task -----------------------------------------------------------------------------
+#     print("  - HCT - Task")
 
-    # Process signals
-    hct_physio = hct.to_data_frame()[["PHOTO", "ECG", "PPG_Muse"]]
-    hct_physio, info = nk.bio_process(
-        ecg=hct_physio["ECG"].values,
-        ppg=hct_physio["PPG_Muse"].values,
-        sampling_rate=2000,
-        keep=hct_physio["PHOTO"],
-    )
-    qc_hct_ecg, qc_hct_ppg = qc_physio(
-        hct_physio, info, sub, plot_ecg=qc_hct_ecg, plot_ppg=qc_hct_ppg
-    )
+#     # Process signals
+#     hct_physio = hct.to_data_frame()[["PHOTO", "ECG", "PPG_Muse"]]
+#     hct_physio, info = nk.bio_process(
+#         ecg=hct_physio["ECG"].values,
+#         ppg=hct_physio["PPG_Muse"].values,
+#         sampling_rate=2000,
+#         keep=hct_physio["PHOTO"],
+#     )
+#     qc_hct_ecg, qc_hct_ppg = qc_physio(
+#         hct_physio, info, sub, plot_ecg=qc_hct_ecg, plot_ppg=qc_hct_ppg
+#     )
 
-    epochs = nk.epochs_create(
-        hct_physio, events, sampling_rate=2000, epochs_start=0, epochs_end="from_events"
-    )
+#     epochs = nk.epochs_create(
+#         hct_physio, events, sampling_rate=2000, epochs_start=0, epochs_end="from_events"
+#     )
 
-    # Load behavioral data
-    file = [file for file in os.listdir(path_beh) if "HCT" in file]
-    file = path_beh + [f for f in file if ".tsv" in f][0]
-    hct_beh = pd.read_csv(file, sep="\t")
+#     # Load behavioral data
+#     file = [file for file in os.listdir(path_beh) if "HCT" in file]
+#     file = path_beh + [f for f in file if ".tsv" in f][0]
+#     hct_beh = pd.read_csv(file, sep="\t")
 
-    # Count R peaks in each epoch
-    hct_beh["N_R_peaks"] = [epoch["ECG_R_Peaks"].sum() for i, epoch in epochs.items()]
-    hct_beh["N_PPG_peaks"] = [epoch["PPG_Peaks"].sum() for i, epoch in epochs.items()]
+#     # Count R peaks in each epoch
+#     hct_beh["N_R_peaks"] = [epoch["ECG_R_Peaks"].sum() for i, epoch in epochs.items()]
+#     hct_beh["N_PPG_peaks"] = [epoch["PPG_Peaks"].sum() for i, epoch in epochs.items()]
 
-    # Manual fix (based on comments)
-    peaks = hct_beh["N_R_peaks"].values
-    if sub == "sub-09":
-        peaks = hct_beh["N_PPG_peaks"].values
+#     # Manual fix (based on comments)
+#     peaks = hct_beh["N_R_peaks"].values
+#     if sub == "sub-09":
+#         peaks = hct_beh["N_PPG_peaks"].values
 
-    # Compute accuracy
-    hct_beh["HCT_Accuracy"] = 1 - (abs(peaks - hct_beh["Answer"])) / (
-        (peaks + hct_beh["Answer"]) / 2
-    )
+#     # Compute accuracy
+#     hct_beh["HCT_Accuracy"] = 1 - (abs(peaks - hct_beh["Answer"])) / (
+#         (peaks + hct_beh["Answer"]) / 2
+#     )
 
-    # Manual fixes (based on comments)
-    if sub == "sub-07":
-        hct_beh.loc[2, ["Confidence", "HCT_Accuracy"]] = np.nan
-    if sub == "sub-11":
-        hct_beh.loc[0:2, ["Confidence", "HCT_Accuracy"]] = np.nan
+#     # Manual fixes (based on comments)
+#     if sub == "sub-07":
+#         hct_beh.loc[2, ["Confidence", "HCT_Accuracy"]] = np.nan
+#     if sub == "sub-11":
+#         hct_beh.loc[0:2, ["Confidence", "HCT_Accuracy"]] = np.nan
 
-    # Compute interoception scores (Garfinkel et al., 2015)
-    dfsub["HCT_Accuracy"] = np.mean(hct_beh["HCT_Accuracy"])
-    dfsub["HCT_Sensibility"] = np.nanmean(hct_beh["Confidence"])
-    dfsub["HCT_Awareness"] = scipy.stats.spearmanr(
-        hct_beh["Confidence"].dropna(), hct_beh["HCT_Accuracy"].dropna()
-    ).statistic
+#     # Compute interoception scores (Garfinkel et al., 2015)
+#     dfsub["HCT_Accuracy"] = np.mean(hct_beh["HCT_Accuracy"])
+#     dfsub["HCT_Sensibility"] = np.nanmean(hct_beh["Confidence"])
+#     dfsub["HCT_Awareness"] = scipy.stats.spearmanr(
+#         hct_beh["Confidence"].dropna(), hct_beh["HCT_Accuracy"].dropna()
+#     ).statistic
 
-    df = pd.concat([df, dfsub], axis=0)
+#     df = pd.concat([df, dfsub], axis=0)
 
 
-# Clean up and Save data
-df = pd.merge(meta, df)
-# Keep only columns that do not end with number or _R
-df = df.filter(regex="^(?!.*[0-9]$)(?!.*_R$).*")
-df.to_csv("../data/data.csv", index=False)
-df_hep.to_csv("../data/data_hep.csv", index=False)
+# # Clean up and Save data
+# df = pd.merge(meta, df)
+# # Keep only columns that do not end with number or _R
+# df = df.filter(regex="^(?!.*[0-9]$)(?!.*_R$).*")
+# df.to_csv("../data/data.csv", index=False)
+# df_hep.to_csv("../data/data_hep.csv", index=False)
 df_tap.to_csv("../data/data_tap.csv", index=False)
 
 # Save figures
