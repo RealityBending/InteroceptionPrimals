@@ -24,6 +24,11 @@ def load_physio(path, sub):
     )
     assert len(events["onset"]) == 1  # Check that there is only one event
 
+    rs = nk.mne_crop(
+        rs, smin=events["onset"][0], smax=events["onset"][0] + events["duration"][0]
+    )
+    assert len(rs) > rs.info["sfreq"] * 60 * 6  # Check duration is at least 6 minutes
+
     # Fix for recording interruption
     if sub in ["sub-10", "sub-16", "sub-20"]:  # Cut till before the nan
         first_na = np.where(rs.to_data_frame()[["AF7"]].isna())[0][0]
@@ -43,4 +48,25 @@ def load_physio(path, sub):
         last_na = np.where(rs.to_data_frame()[["ECG"]][0:800000].isna())[0][-1] + 1
         rs = nk.mne_crop(rs, smin=last_na, smax=None)
 
-    return rs
+    # HCT ==============================================================================
+    # Open HCT file
+    file = [file for file in os.listdir(path_eeg) if "HCT" in file]
+    file = path_eeg + [f for f in file if ".vhdr" in f][0]
+    hct = mne.io.read_raw_brainvision(file, preload=True, verbose=False)
+
+    # Filter EEG
+    hct = hct.set_montage("standard_1020")
+
+    # Find events and crop just before (1 second +/-) first and after last
+    events = nk.events_find(
+        hct["PHOTO"][0][0], threshold_keep="below", duration_min=15000
+    )
+    if sub in ["sub-16"]:
+        events["onset"] = events["onset"][0:-1]
+        events["duration"] = events["duration"][0:-1]
+    start_end = [events["onset"][0], events["onset"][-1] + events["duration"][-1]]
+    if sub in ["sub-13"]:
+        start_end[0] = 2178
+    hct = nk.mne_crop(hct, smin=start_end[0] - 2000, smax=start_end[1] + 2000)
+
+    return rs, hct
