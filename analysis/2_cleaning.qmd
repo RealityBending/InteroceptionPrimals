@@ -1,0 +1,98 @@
+---
+title: "Interoception and Primals"
+editor: source
+editor_options: 
+  chunk_output_type: console
+format:
+  html:
+    code-fold: true
+    self-contained: true
+---
+
+## Data Preparation
+
+```{r}
+#| message: false
+#| warning: false
+
+library(tidyverse)
+library(easystats)
+library(patchwork)
+library(ggside)
+```
+
+
+```{r}
+#| code-fold: false
+
+df <- read.csv("../data/data_participants.csv") 
+```
+
+The initial sample consisted of `r report::report_participants(df, age="Age", gender="Gender")`.
+
+## Descriptive 
+
+::: {.panel-tabset}
+
+### MAIA
+
+```{r}
+#| code-fold: false
+
+select(df, starts_with("MAIA")) |> 
+   select(-contains("_R"), -matches("\\d$")) |> 
+  estimate_density() |> 
+  ggplot(aes(x=x, y=y, color=Parameter)) +
+  geom_line()
+```
+
+### IAS
+
+```{r}
+#| code-fold: false
+
+df$IAS_Total <- rowSums(select(df, starts_with("IAS"))) / 21
+
+select(df, starts_with("IAS")) |> 
+  select(-contains("_R"), -matches("\\d$")) |> 
+  estimate_density() |> 
+  ggplot(aes(x=x, y=y, color=Parameter)) +
+  geom_line()
+```
+
+### HCT
+
+```{r}
+#| code-fold: false
+
+select(df, starts_with("HCT")) |> 
+  estimate_density() |> 
+  ggplot(aes(x=x, y=y, color=Parameter)) +
+  geom_line()
+```
+
+
+### PI-99
+
+```{r}
+#| code-fold: false
+
+select(df, starts_with("PI")) |> 
+  select(-matches("\\d")) |>
+  # Remove cols containing digit
+  estimate_density() |> 
+  ggplot(aes(x=x, y=y, color=Parameter)) +
+  geom_line()
+```
+
+:::
+
+## Save 
+
+```{r}
+#| code-fold: false
+
+# write.csv(df, "../data/data_participants.csv", row.names = FALSE)
+# write.csv(dftask, "../data/data.csv", row.names = FALSE)
+```
+
