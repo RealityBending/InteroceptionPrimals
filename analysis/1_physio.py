@@ -148,9 +148,7 @@ for sub in meta["participant_id"].values:
         peaks = hct_beh["N_PPG_peaks"].values
 
     # Compute accuracy
-    hct_beh["HCT_Accuracy"] = 1 - (abs(peaks - hct_beh["Answer"])) / (
-        (peaks + hct_beh["Answer"]) / 2
-    )
+    hct_beh["HCT_Accuracy"] = 1 - ((np.abs(hct_beh["Answer"] - peaks)) / peaks)
 
     # Manual fixes (based on comments)
     if sub == "sub-07":
