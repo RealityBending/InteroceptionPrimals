@@ -61,12 +61,15 @@ def load_physio(path, sub):
     events = nk.events_find(
         hct["PHOTO"][0][0], threshold_keep="below", duration_min=15000
     )
-    if sub in ["sub-16"]:
+    if sub in ["sub-16", "sub-52"]:
         events["onset"] = events["onset"][0:-1]
         events["duration"] = events["duration"][0:-1]
+        events["duration"] = events["duration"][1:]
     start_end = [events["onset"][0], events["onset"][-1] + events["duration"][-1]]
     if sub in ["sub-13"]:
-        start_end[0] = 2178
+        start_end[0] = 2000  # Because first onset < 2000
     hct = nk.mne_crop(hct, smin=start_end[0] - 2000, smax=start_end[1] + 2000)
+
+    assert len(events["onset"]) == 6  # Check that there are 6 epochs (the 6 intervals)
 
     return rs, hct
