@@ -1,8 +1,5 @@
-import io
 import os
-import time
 
-import autoreject
 import matplotlib.pyplot as plt
 import mne
 import neurokit2 as nk
@@ -11,15 +8,17 @@ import pandas as pd
 import PIL
 import pyllusion as ill
 import scipy.stats
-import urllib.request
+import requests
 
 mne.set_log_level(verbose="WARNING")
 
 # Convenience functions ======================================================================
-r = urllib.request.urlopen(
-    "https://raw.githubusercontent.com/RealityBending/PrimalsInteroception/main/analysis/0_clean_physio.py"
-).read()
-eval(compile(r.decode(), "<string>", "single"))
+# Download the load_physio() function
+exec(
+    requests.get(
+        "https://raw.githubusercontent.com/RealityBending/PrimalsInteroception/main/analysis/func_load_physio.py"
+    ).text
+)
 
 
 def qc_physio(df, info, sub, plot_ecg=[], plot_ppg=[]):
@@ -164,6 +163,7 @@ for sub in meta["participant_id"].values:
     ).statistic
 
     # Hear Rate Variability (HRV) -------------------------------------------------------------
+    print("  - HCT - HRV")
 
     hrv = pd.concat(
         [

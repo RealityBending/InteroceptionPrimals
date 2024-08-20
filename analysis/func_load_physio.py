@@ -29,7 +29,6 @@ def load_physio(path, sub):
         #     [10000, 10000 + rs.info["sfreq"] * 60 * 8], ymin=0, ymax=10, color="red"
         # )
         events = {"onset": [10000], "duration": [rs.info["sfreq"] * 60 * 8]}
-        rs.to_data_frame().plot(subplots=True)
 
     assert len(events["onset"]) == 1  # Check that there is only one event
 
@@ -87,9 +86,10 @@ def load_physio(path, sub):
 
     assert len(events["onset"]) == 6  # Check that there are 6 epochs (the 6 intervals)
 
-
     # Interpolate signal interruptions
     if sub in ["sub-13"]:
-        hct = hct.apply_function(nk.signal_fillmissing, picks="PPG_Muse", method="backward")
+        hct = hct.apply_function(
+            nk.signal_fillmissing, picks="PPG_Muse", method="backward"
+        )
 
     return rs, hct
