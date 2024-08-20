@@ -22,6 +22,15 @@ def load_physio(path, sub):
         threshold_keep="below",
         duration_min=int(rs.info["sfreq"] * 5),
     )
+
+    if sub in ["sub-57"]:  # No Lux, crop out based on GYRO
+        # nk.signal_plot(rs["GYRO"][0][0])
+        # plt.vlines(
+        #     [10000, 10000 + rs.info["sfreq"] * 60 * 8], ymin=0, ymax=10, color="red"
+        # )
+        events = {"onset": [10000], "duration": [rs.info["sfreq"] * 60 * 8]}
+        rs.to_data_frame().plot(subplots=True)
+
     assert len(events["onset"]) == 1  # Check that there is only one event
 
     rs = nk.mne_crop(
@@ -61,15 +70,26 @@ def load_physio(path, sub):
     events = nk.events_find(
         hct["PHOTO"][0][0], threshold_keep="below", duration_min=15000
     )
-    if sub in ["sub-16", "sub-52"]:
+    # nk.signal_plot(hct["PHOTO"][0][0])
+
+    # Fix manual cases
+    if sub in ["sub-16", "sub-52", "sub-54"]:
         events["onset"] = events["onset"][0:-1]
         events["duration"] = events["duration"][0:-1]
-        events["duration"] = events["duration"][1:]
+
+    # Get new start and end of the recording
     start_end = [events["onset"][0], events["onset"][-1] + events["duration"][-1]]
-    if sub in ["sub-13"]:
-        start_end[0] = 2000  # Because first onset < 2000
+    if sub in ["sub-13"]:  # Because first onset < 2000
+        first_valid = hct["PPG_Muse"][0][0]
+        first_valid = np.where(~np.isnan(first_valid))[0][0]
+        start_end[0] = 2000 + first_valid
     hct = nk.mne_crop(hct, smin=start_end[0] - 2000, smax=start_end[1] + 2000)
 
     assert len(events["onset"]) == 6  # Check that there are 6 epochs (the 6 intervals)
+
+
+    # Interpolate signal interruptions
+    if sub in ["sub-13"]:
+        hct = hct.apply_function(nk.signal_fillmissing, picks="PPG_Muse", method="backward")
 
     return rs, hct
