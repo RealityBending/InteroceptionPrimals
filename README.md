@@ -6,11 +6,11 @@ This study is part of a [*Sussex Junior Research Assistant*](https://realitybend
 
 ### Try the Experiment
 
-- [**Order 1 (Task First)**](https://realitybending.github.io/PrimalsInteroception/experiment/TaskFirst.html)
-- [**Order 2 (Questionnaire First)**](https://realitybending.github.io/PrimalsInteroception/experiment/QuestionnaireFirst.html)
+- [**Order 1 (Task First)**](https://realitybending.github.io/InteroceptionPrimals/experiment/TaskFirst.html)
+- [**Order 2 (Questionnaire First)**](https://realitybending.github.io/InteroceptionPrimals/experiment/QuestionnaireFirst.html)
 
 ### Additional Materials
 
 - Ethics Review Number: ER/JX205/1
 - [Preregistration](osf.io/4snct)
-- [Repository version at the time of preregistration](https://github.com/RealityBending/PrimalsInteroception/releases/tag/0.1)
+- [Repository version at the time of preregistration](https://github.com/RealityBending/InteroceptionPrimals/releases/tag/0.1)
