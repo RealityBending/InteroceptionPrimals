@@ -16,7 +16,7 @@ mne.set_log_level(verbose="WARNING")
 # Download the load_physio() function
 exec(
     requests.get(
-        "https://raw.githubusercontent.com/RealityBending/PrimalsInteroception/main/analysis/func_load_physio.py"
+        "https://raw.githubusercontent.com/RealityBending/InteroceptionPrimals/main/analysis/func_load_physio.py"
     ).text
 )
 
@@ -49,8 +49,8 @@ def qc_physio(df, info, sub, plot_ecg=[], plot_ppg=[]):
 # Variables ==================================================================================
 # Change the path to your local data folder.
 # The data can be downloaded from OpenNeuro (TODO).
-path = "C:/Users/domma/Box/Data/PrimalsInteroception/Reality Bending Lab - PrimalsInteroception/"
-# path = "C:/Users/dmm56/Box/Data/PrimalsInteroception/Reality Bending Lab - PrimalsInteroception/"
+path = "C:/Users/domma/Box/Data/InteroceptionPrimals/Reality Bending Lab - InteroceptionPrimals/"
+# path = "C:/Users/dmm56/Box/Data/InteroceptionPrimals/Reality Bending Lab - InteroceptionPrimals/"
 
 # Get participant list
 meta = pd.read_csv(path + "participants.tsv", sep="\t")
