@@ -1,4 +1,5 @@
 def load_physio(path, sub):
+
     """Function to preprocess the files of participants."""
     import os
     import mne
@@ -44,7 +45,7 @@ def load_physio(path, sub):
     if sub in ["sub-15", "sub-19"]:  # Take second half
         last_na = np.where(rs.to_data_frame()[["AF7"]][0:800000].isna())[0][-1]
         rs = nk.mne_crop(rs, smin=last_na, smax=None)
-    if sub in ["sub-24"]:  # Crop out nans at the beginning
+    if sub in ["sub-24", "sub-50"]:  # Crop out nans at the beginning
 
         def consecutive_nans(ch="AF7"):
             nans = np.where(rs.to_data_frame()[ch].isna())[0]
