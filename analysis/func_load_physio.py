@@ -1,10 +1,10 @@
 def load_physio(path, sub):
-
     """Function to preprocess the files of participants."""
     import os
+
     import mne
-    import numpy as np
     import neurokit2 as nk
+    import numpy as np
 
     # Path to EEG data
     path_eeg = path + sub + "/eeg/"
@@ -33,9 +33,7 @@ def load_physio(path, sub):
 
     assert len(events["onset"]) == 1  # Check that there is only one event
 
-    rs = nk.mne_crop(
-        rs, smin=events["onset"][0], smax=events["onset"][0] + events["duration"][0]
-    )
+    rs = nk.mne_crop(rs, smin=events["onset"][0], smax=events["onset"][0] + events["duration"][0])
     assert len(rs) > rs.info["sfreq"] * 60 * 6  # Check duration is at least 6 minutes
 
     # Fix for recording interruption
@@ -45,17 +43,17 @@ def load_physio(path, sub):
     if sub in ["sub-15", "sub-19"]:  # Take second half
         last_na = np.where(rs.to_data_frame()[["AF7"]][0:800000].isna())[0][-1]
         rs = nk.mne_crop(rs, smin=last_na, smax=None)
-    if sub in ["sub-24", "sub-50"]:  # Crop out nans at the beginning
+    if sub in ["sub-24", "sub-50", "sub-105", "sub-65", "sub-38"]:
+        # Crop out nans at the beginning
 
-        def consecutive_nans(ch="AF7"):
+        def consecutive_nans(ch="AF7"):  # Find consecutives nans in 3 groups of channels
             nans = np.where(rs.to_data_frame()[ch].isna())[0]
+            if len(nans) == 0:
+                return 0
             return np.max(np.split(nans, np.where(np.diff(nans) != 1)[0] + 1)[0])
 
         nans = np.max([consecutive_nans(ch) for ch in ["AF7", "ECG", "PPG_Muse"]])
         rs = nk.mne_crop(rs, smin=nans, smax=None)
-    if sub in ["sub-38"]:  # Crop out nans at the beginning
-        last_na = np.where(rs.to_data_frame()[["ECG"]][0:800000].isna())[0][-1] + 1
-        rs = nk.mne_crop(rs, smin=last_na, smax=None)
 
     # HCT ==============================================================================
     # Open HCT file
@@ -67,13 +65,11 @@ def load_physio(path, sub):
     hct = hct.set_montage("standard_1020")
 
     # Find events and crop just before (1 second +/-) first and after last
-    events = nk.events_find(
-        hct["PHOTO"][0][0], threshold_keep="below", duration_min=15000
-    )
+    events = nk.events_find(hct["PHOTO"][0][0], threshold_keep="below", duration_min=15000)
     # nk.signal_plot(hct["PHOTO"][0][0])
 
     # Fix manual cases
-    if sub in ["sub-16", "sub-52", "sub-54"]:
+    if sub in ["sub-16", "sub-52", "sub-54", "sub-102"]:
         events["onset"] = events["onset"][0:-1]
         events["duration"] = events["duration"][0:-1]
 
@@ -89,8 +85,6 @@ def load_physio(path, sub):
 
     # Interpolate signal interruptions
     if sub in ["sub-13"]:
-        hct = hct.apply_function(
-            nk.signal_fillmissing, picks="PPG_Muse", method="backward"
-        )
+        hct = hct.apply_function(nk.signal_fillmissing, picks="PPG_Muse", method="backward")
 
     return rs, hct

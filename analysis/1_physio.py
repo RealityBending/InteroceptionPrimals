@@ -7,8 +7,8 @@ import numpy as np
 import pandas as pd
 import PIL
 import pyllusion as ill
-import scipy.stats
 import requests
+import scipy.stats
 
 mne.set_log_level(verbose="WARNING")
 
@@ -27,9 +27,13 @@ def qc_physio(df, info, sub, plot_ecg=[], plot_ppg=[]):
     # ECG ------------------------------------------------------------------------------------
     nk.ecg_plot(df, info)  # Save ECG plot
     fig = plt.gcf()
-    img = ill.image_text(
-        sub, color="black", size=100, x=-0.82, y=0.90, image=nk.fig2img(fig)
-    )
+
+    # Remove legend and resize
+    [ax.legend().set_visible(False) for ax in fig.axes]
+    fig.set_size_inches(fig.get_size_inches() * 0.3)
+
+    # Add text
+    img = ill.image_text(sub, color="black", size=100, x=-0.82, y=0.90, image=nk.fig2img(fig))
     plt.close(fig)  # Do not show the plot in the console
     plot_ecg.append(img)
 
@@ -38,9 +42,13 @@ def qc_physio(df, info, sub, plot_ecg=[], plot_ppg=[]):
         df["PPG_Raw"] = nk.rescale(df["PPG_Raw"], to=df["PPG_Clean"])
         nk.ppg_plot(df, info)  # Save ECG plot
         fig = plt.gcf()
-        img = ill.image_text(
-            sub, color="black", size=100, x=-0.82, y=0.90, image=nk.fig2img(fig)
-        )
+
+        # Remove legend and resize
+        [ax.legend().set_visible(False) for ax in fig.axes]
+        fig.set_size_inches(fig.get_size_inches() * 0.3)
+
+        # Add text
+        img = ill.image_text(sub, color="black", size=100, x=-0.82, y=0.90, image=nk.fig2img(fig))
         plot_ppg.append(img)
         plt.close(fig)
     return plot_ecg, plot_ppg
@@ -50,8 +58,8 @@ def qc_physio(df, info, sub, plot_ecg=[], plot_ppg=[]):
 # Change the path to your local data folder.
 # The data can be downloaded from OpenNeuro (TODO).
 # path = "C:/Users/domma/Box/Data/InteroceptionPrimals/Reality Bending Lab - InteroceptionPrimals/"
-# path = "C:/Users/dmm56/Box/Data/InteroceptionPrimals/Reality Bending Lab - InteroceptionPrimals/"
-path = "C:/Users/asf25/OneDrive - University of Sussex/Desktop/data/Reality Bending Lab - InteroceptionPrimals/"
+path = "C:/Users/dmm56/Box/Data/InteroceptionPrimals/Reality Bending Lab - InteroceptionPrimals/"
+# path = "C:/Users/asf25/OneDrive - University of Sussex/Desktop/data/Reality Bending Lab - InteroceptionPrimals/"
 
 # Get participant list
 meta = pd.read_csv(path + "participants.tsv", sep="\t")
@@ -60,16 +68,13 @@ meta = pd.read_csv(path + "participants.tsv", sep="\t")
 df = pd.DataFrame()
 qc = {"rs_ecg": [], "rs_ppg": [], "hct_ecg": [], "hct_ppg": []}
 
-start_pt = 0
-end_pt = 20 
-
-selected_participants = meta["participant_id"].values[start_pt:end_pt]
 
 # Loop through participants ==================================================================
 for sub in meta["participant_id"].values:
+
     # Print progress and comments
     print(sub)
-  #  print("  * " + meta[meta["participant_id"] == sub]["Comments"].values[0])
+    print("  * " + meta[meta["participant_id"] == sub]["Comments"].values[0])
 
     # Path to EEG data
     path_eeg = path + sub + "/eeg/"
@@ -95,9 +100,7 @@ for sub in meta["participant_id"].values:
     )
 
     # QC
-    qc["rs_ecg"], qc["rs_ppg"] = qc_physio(
-        bio, info, sub, plot_ecg=qc["rs_ecg"], plot_ppg=qc["rs_ppg"]
-    )
+    qc["rs_ecg"], qc["rs_ppg"] = qc_physio(bio, info, sub, plot_ecg=qc["rs_ecg"], plot_ppg=qc["rs_ppg"])
 
     # # Hear Rate Variability (HRV) -------------------------------------------------------------
     # hrv = nk.hrv(bio["ECG_R_Peaks"].values.nonzero()[0], sampling_rate=rs.info["sfreq"])
