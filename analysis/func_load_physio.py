@@ -43,10 +43,13 @@ def load_physio(path, sub):
     if sub in ["sub-15", "sub-19"]:  # Take second half
         last_na = np.where(rs.to_data_frame()[["AF7"]][0:800000].isna())[0][-1]
         rs = nk.mne_crop(rs, smin=last_na, smax=None)
-    if sub in ["sub-24", "sub-50", "sub-105", "sub-65", "sub-38"]:
+    if sub in ["sub-105", "sub-38", "sub-65", "sub-68"]:  # Crop out nans at the beginning
+        last_na = np.where(rs.to_data_frame()[["ECG"]][0:800000].isna())[0][-1] + 1
+        rs = nk.mne_crop(rs, smin=last_na, smax=None)        
+    if sub in ["sub-24", "sub-105"]:
         # Crop out nans at the beginning
 
-        def consecutive_nans(ch="AF7"):  # Find consecutives nans in 3 groups of channels
+        def consecutive_nans(ch=["AF7", "ECG", "PPG_Muse"]):  # Find consecutives nans in 3 groups of channels
             nans = np.where(rs.to_data_frame()[ch].isna())[0]
             if len(nans) == 0:
                 return 0
