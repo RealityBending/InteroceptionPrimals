@@ -34,7 +34,7 @@ def qc_physio(df, info, sub, plot_ecg=[], plot_ppg=[]):
 
     # Add text
     img = ill.image_text(
-        sub, color="black", size=100, x=-0.82, y=0.90, image=nk.fig2img(fig)
+        sub, color="black", size=40, x=-0.82, y=0.90, image=nk.fig2img(fig)
     )
     plt.close(fig)  # Do not show the plot in the console
     plot_ecg.append(img)
@@ -51,7 +51,7 @@ def qc_physio(df, info, sub, plot_ecg=[], plot_ppg=[]):
 
         # Add text
         img = ill.image_text(
-            sub, color="black", size=100, x=-0.82, y=0.90, image=nk.fig2img(fig)
+            sub, color="black", size=40, x=-0.82, y=0.90, image=nk.fig2img(fig)
         )
         plot_ppg.append(img)
         plt.close(fig)
@@ -74,7 +74,7 @@ qc = {"rs_ecg": [], "rs_ppg": [], "hct_ecg": [], "hct_ppg": []}
 
 
 # Loop through participants ==================================================================
-for i, sub in enumerate(meta["participant_id"].values[84::]):
+for i, sub in enumerate(meta["participant_id"].values):
 
     # Print progress and comments
     print(sub)
@@ -93,104 +93,132 @@ for i, sub in enumerate(meta["participant_id"].values[84::]):
     rs, hct = load_physio(path, sub)  # Function loaded from script at URL
 
     # Resting State ==========================================================================
+    if sub not in ["sub-86"]:  # No RS file
+        # Preprocessing --------------------------------------------------------------------------
+        print("  - RS - Preprocessing")
+
+        bio, info = nk.bio_process(
+            ecg=rs["ECG"][0][0],
+            ppg=rs["PPG_Muse"][0][0],
+            sampling_rate=rs.info["sfreq"],
+        )
+
+        # QC
+        qc["rs_ecg"], qc["rs_ppg"] = qc_physio(
+            bio, info, sub, plot_ecg=qc["rs_ecg"], plot_ppg=qc["rs_ppg"]
+        )
+
+        # Hear Rate Variability (HRV) -------------------------------------------------------------
+        hrv = nk.hrv(
+            bio["ECG_R_Peaks"].values.nonzero()[0], sampling_rate=rs.info["sfreq"]
+        )
+        idx = [
+            "MeanNN",
+            "SDNN",
+            "RMSSD",
+            "SampEn",
+            "HF",
+            "HFD",
+            "LFHF",
+            "IALS",
+            "Ca",
+            "AI",
+        ]
+        hrv = hrv[["HRV_" + s for s in idx]]
+        dfsub = pd.concat([dfsub, hrv], axis=1)
+
+    # Heartbeat Counting Task (HCT) ===========================================================
 
     # Preprocessing --------------------------------------------------------------------------
-    print("  - RS - Preprocessing")
+    print("  - HCT - Preprocessing")
 
-    bio, info = nk.bio_process(
-        ecg=rs["ECG"][0][0],
-        ppg=rs["PPG_Muse"][0][0],
-        sampling_rate=rs.info["sfreq"],
+    # Find events (again as data was cropped) and epoch
+    events = nk.events_find(
+        hct["PHOTO"][0][0], threshold_keep="below", duration_min=15000
+    )
+
+    # Make sure there are 6 events of expected duration
+    # - sub68 has one slitghtly shorter event (we can keep it)
+    if sub not in ["sub-68"]:
+        assert len(events["onset"]) == 6
+        durations = np.sort(events["duration"] / hct.info["sfreq"])
+        assert np.max(np.abs(durations - np.array([20, 25, 30, 35, 40, 45]))) < 0.75
+
+    # Process signals
+    hct_physio = hct.to_data_frame()[["PHOTO", "ECG", "PPG_Muse"]]
+    hct_physio, info = nk.bio_process(
+        ecg=hct_physio["ECG"].values,
+        ppg=hct_physio["PPG_Muse"].values,
+        sampling_rate=hct.info["sfreq"],
+        keep=hct_physio["PHOTO"],
     )
 
     # QC
-    qc["rs_ecg"], qc["rs_ppg"] = qc_physio(
-        bio, info, sub, plot_ecg=qc["rs_ecg"], plot_ppg=qc["rs_ppg"]
+    qc["hct_ecg"], qc["hct_ppg"] = qc_physio(
+        hct_physio, info, sub, plot_ecg=qc["hct_ecg"], plot_ppg=qc["hct_ppg"]
     )
 
+    # Analysis --------------------------------------------------------------------------
+    # Make epochs
+    epochs = nk.epochs_create(
+        hct_physio,
+        events,
+        sampling_rate=hct.info["sfreq"],
+        epochs_start=0,
+        epochs_end="from_events",
+    )
+
+    # Load behavioral data
+    file = [file for file in os.listdir(path_beh) if "HCT" in file]
+    file = path_beh + [f for f in file if ".tsv" in f][0]
+    hct_beh = pd.read_csv(file, sep="\t")
+
+    # Count R peaks in each epoch
+    hct_beh["N_R_peaks"] = [epoch["ECG_R_Peaks"].sum() for i, epoch in epochs.items()]
+    hct_beh["N_PPG_peaks"] = [epoch["PPG_Peaks"].sum() for i, epoch in epochs.items()]
+
+    # Manual fix (based on comments)
+    peaks = hct_beh["N_R_peaks"].values
+    if sub == "sub-09":  # No ECG
+        peaks = hct_beh["N_PPG_peaks"].values
+
+    # Compute accuracy
+    if sub in ["sub-72"]:
+        hct_beh["HCT_Accuracy"] = np.nan
+    else:
+        hct_beh["HCT_Accuracy"] = 1 - ((np.abs(hct_beh["Answer"] - peaks)) / peaks)
+
+    # Manual fixes (based on comments)
+    if sub == "sub-07":
+        hct_beh.loc[2, ["Confidence", "HCT_Accuracy"]] = np.nan
+    if sub == "sub-11":
+        hct_beh.loc[0:2, ["Confidence", "HCT_Accuracy"]] = np.nan
+
+    # Compute interoception scores (Garfinkel et al., 2015) -----------------------------------
+    if sub not in ["sub-72"]:
+        dfsub["HCT_Accuracy"] = np.nanmean(hct_beh["HCT_Accuracy"])
+        dfsub["HCT_Sensibility"] = np.nanmean(hct_beh["Confidence"])
+        dfsub["HCT_Awareness"] = scipy.stats.spearmanr(
+            hct_beh["Confidence"].dropna(), hct_beh["HCT_Accuracy"].dropna()
+        ).statistic
+
     # Hear Rate Variability (HRV) -------------------------------------------------------------
-    hrv = nk.hrv(bio["ECG_R_Peaks"].values.nonzero()[0], sampling_rate=rs.info["sfreq"])
-    idx = ["MeanNN", "SDNN", "RMSSD", "SampEn", "HF", "HFD", "LFHF", "IALS", "Ca", "AI"]
-    hrv = hrv[["HRV_" + s for s in idx]]
-    dfsub = pd.concat([dfsub, hrv], axis=1)
+    print("  - HCT - HRV")
 
-    # # Heartbeat Counting Task (HCT) ===========================================================
+    hrv = pd.concat(
+        [
+            nk.hrv_time(
+                e["ECG_R_Peaks"].values.nonzero()[0], sampling_rate=hct.info["sfreq"]
+            )
+            for e in epochs.values()
+        ]
+    )
+    hrv = hrv[["HRV_" + s for s in ["MeanNN", "SDNN", "RMSSD"]]].mean(axis=0)
+    hrv.index = [s + "_HCT" for s in hrv.index]
+    dfsub = pd.concat([dfsub, pd.DataFrame(hrv).T], axis=1)
 
-    # # Preprocessing --------------------------------------------------------------------------
-    # print("  - HCT - Preprocessing")
-
-    # # Find events (again as data was cropped) and epoch
-    # events = nk.events_find(
-    #     hct["PHOTO"][0][0], threshold_keep="below", duration_min=15000
-    # )
-
-    # # Process signals
-    # hct_physio = hct.to_data_frame()[["PHOTO", "ECG", "PPG_Muse"]]
-    # hct_physio, info = nk.bio_process(
-    #     ecg=hct_physio["ECG"].values,
-    #     ppg=hct_physio["PPG_Muse"].values,
-    #     sampling_rate=2000,
-    #     keep=hct_physio["PHOTO"],
-    # )
-
-    # # # QC
-    # # qc["hct_ecg"], qc["hct_ppg"] = qc_physio(
-    # #     hct_physio, info, sub, plot_ecg=qc["hct_ecg"], plot_ppg=qc["hct_ppg"]
-    # # )
-
-    # # Analysis --------------------------------------------------------------------------
-    # # Make epochs
-    # epochs = nk.epochs_create(
-    #     hct_physio, events, sampling_rate=2000, epochs_start=0, epochs_end="from_events"
-    # )
-
-    # # Load behavioral data
-    # file = [file for file in os.listdir(path_beh) if "HCT" in file]
-    # file = path_beh + [f for f in file if ".tsv" in f][0]
-    # hct_beh = pd.read_csv(file, sep="\t")
-
-    # # Count R peaks in each epoch
-    # hct_beh["N_R_peaks"] = [epoch["ECG_R_Peaks"].sum() for i, epoch in epochs.items()]
-    # hct_beh["N_PPG_peaks"] = [epoch["PPG_Peaks"].sum() for i, epoch in epochs.items()]
-
-    # # Manual fix (based on comments)
-    # peaks = hct_beh["N_R_peaks"].values
-    # if sub == "sub-09":  # No ECG
-    #     peaks = hct_beh["N_PPG_peaks"].values
-
-    # # Compute accuracy
-    # hct_beh["HCT_Accuracy"] = 1 - ((np.abs(hct_beh["Answer"] - peaks)) / peaks)
-
-    # # Manual fixes (based on comments)
-    # if sub == "sub-07":
-    #     hct_beh.loc[2, ["Confidence", "HCT_Accuracy"]] = np.nan
-    # if sub == "sub-11":
-    #     hct_beh.loc[0:2, ["Confidence", "HCT_Accuracy"]] = np.nan
-
-    # # Compute interoception scores (Garfinkel et al., 2015) -----------------------------------
-    # dfsub["HCT_Accuracy"] = np.mean(hct_beh["HCT_Accuracy"])
-    # dfsub["HCT_Sensibility"] = np.nanmean(hct_beh["Confidence"])
-    # dfsub["HCT_Awareness"] = scipy.stats.spearmanr(
-    #     hct_beh["Confidence"].dropna(), hct_beh["HCT_Accuracy"].dropna()
-    # ).statistic
-
-    # # Hear Rate Variability (HRV) -------------------------------------------------------------
-    # print("  - HCT - HRV")
-
-    # hrv = pd.concat(
-    #     [
-    #         nk.hrv_time(
-    #             e["ECG_R_Peaks"].values.nonzero()[0], sampling_rate=rs.info["sfreq"]
-    #         )
-    #         for e in epochs.values()
-    #     ]
-    # )
-    # hrv = hrv[["HRV_" + s for s in ["MeanNN", "SDNN", "RMSSD"]]].mean(axis=0)
-    # hrv.index = [s + "_HCT" for s in hrv.index]
-    # dfsub = pd.concat([dfsub, pd.DataFrame(hrv).T], axis=1)
-
-    # # Append participant to rest --------------------------------------------------------------
-    # df = pd.concat([df, dfsub], axis=0)
+    # Append participant to rest --------------------------------------------------------------
+    df = pd.concat([df, dfsub], axis=0)
 
 
 # Clean up and Save data

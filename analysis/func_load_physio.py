@@ -21,73 +21,83 @@ def load_physio(path, sub):
                 other[ch] = consecutive
         return np.max(start), other
 
-    # Path to EEG data
-    path_eeg = path + sub + "/eeg/"
-    path_beh = path + sub + "/beh/"
+    # RS ==============================================================================
+    def load_rs(path, sub):
 
-    # Resting State ==============================================================================
-    file = [file for file in os.listdir(path_eeg) if "RS" in file]
-    file = path_eeg + [f for f in file if ".vhdr" in f][0]
+        # Path to EEG data
+        path_eeg = path + sub + "/eeg/"
+        file = [file for file in os.listdir(path_eeg) if "RS" in file]
+        file = path_eeg + [f for f in file if ".vhdr" in f][0]
 
-    rs = mne.io.read_raw_brainvision(file, preload=True)
-    rs = rs.set_montage("standard_1020")
+        rs = mne.io.read_raw_brainvision(file, preload=True)
+        rs = rs.set_montage("standard_1020")
 
-    # Detect onset of RS
-    events = nk.events_find(
-        rs.to_data_frame()["PHOTO"],  # nk.signal_plot(rs["PHOTO"][0][0])
-        threshold_keep="below",
-        duration_min=int(rs.info["sfreq"] * 5),
-    )
-
-    if sub in ["sub-57"]:  # No Lux, crop out based on GYRO
-        # nk.signal_plot(rs["GYRO"][0][0])
-        # plt.vlines(
-        #     [10000, 10000 + rs.info["sfreq"] * 60 * 8], ymin=0, ymax=10, color="red"
-        # )
-        events = {"onset": [10000], "duration": [rs.info["sfreq"] * 60 * 8]}
-    if sub in ["sub-80"]:  # No Lux, crop out based on GYRO
-        # nk.signal_plot(rs["GYRO"][0][0])
-        # plt.vlines(
-        #     [10000, 10000 + rs.info["sfreq"] * 60 * 8], ymin=0, ymax=10, color="red"
-        # )
-        events = {"onset": [10000], "duration": [rs.info["sfreq"] * 60 * 8]}
-    assert len(events["onset"]) == 1  # Check that there is only one event
-
-    rs = nk.mne_crop(
-        rs, smin=events["onset"][0], smax=events["onset"][0] + events["duration"][0]
-    )
-    assert len(rs) / rs.info["sfreq"] / 60 > 6  # Check duration is at least 6 minutes
-
-    # Cut out nans at the beginning due to sync delay
-    if sub in ["sub-24", "sub-38", "sub-65", "sub-68", "sub-76", "sub-105"]:
-        # rs.to_data_frame()
-        first_valid, _ = consecutive_nans(rs)
-        rs = nk.mne_crop(rs, smin=first_valid, smax=None)
-    assert rs.to_data_frame()["ECG"].isna().sum() == 0
-
-    # Check MUSE signal interruptions
-    _, others = consecutive_nans(rs)
-    if sub in [
-        "sub-10",
-        "sub-15",
-        "sub-16",
-        "sub-19",
-        "sub-20",
-        "sub-31",
-        "sub-42",
-        "sub-50",
-        "sub-70",
-        "sub-76",
-    ]:
-        rs = rs.apply_function(
-            nk.signal_fillmissing, picks="PPG_Muse", method="forward"
+        # Detect onset of RS
+        events = nk.events_find(
+            rs.to_data_frame()["PHOTO"],  # nk.signal_plot(rs["PHOTO"][0][0])
+            threshold_keep="below",
+            duration_min=int(rs.info["sfreq"] * 5),
         )
+
+        # No Lux, crop out based on GYRO
+        # nk.signal_plot(rs["GYRO"][0][0])
+        # plt.vlines(
+        #     [10000, 10000 + rs.info["sfreq"] * 60 * 8], ymin=0, ymax=10, color="red"
+        # )
+        if sub in ["sub-57", "sub-80", "sub-91"]:
+            events = {"onset": [10000], "duration": [rs.info["sfreq"] * 60 * 8]}
+        if sub in ["sub-93"]:
+            events = {"onset": [4600], "duration": [rs.info["sfreq"] * 60 * 8]}
+        assert len(events["onset"]) == 1  # Check that there is only one event
+
+        rs = nk.mne_crop(
+            rs, smin=events["onset"][0], smax=events["onset"][0] + events["duration"][0]
+        )
+        assert (
+            len(rs) / rs.info["sfreq"] / 60 > 6
+        )  # Check duration is at least 6 minutes
+
+        # Cut out nans at the beginning due to sync delay
+        if sub in ["sub-24", "sub-38", "sub-65", "sub-68", "sub-76", "sub-105"]:
+            # rs.to_data_frame()
+            first_valid, _ = consecutive_nans(rs)
+            rs = nk.mne_crop(rs, smin=first_valid, smax=None)
+        assert rs.to_data_frame()["ECG"].isna().sum() == 0
+
+        # Check MUSE signal interruptions
+        _, others = consecutive_nans(rs)
+        if sub in [
+            "sub-10",
+            "sub-15",
+            "sub-16",
+            "sub-19",
+            "sub-20",
+            "sub-31",
+            "sub-42",
+            "sub-50",
+            "sub-70",
+            "sub-76",
+            "sub-82",
+            "sub-95",
+        ]:
+            rs = rs.apply_function(
+                nk.signal_fillmissing, picks="PPG_Muse", method="forward"
+            )
+        else:
+            # rs.to_data_frame(["ECG", "AF7", "PPG_Muse", "PHOTO"]).plot(subplots=True)
+            assert (
+                len(others["PPG_Muse"]) == 0
+            )  # Make sure no missing values for PPG-Muse
+        return rs
+
+    if sub in ["sub-86"]:  # No RS file
+        rs = None
     else:
-        # rs.to_data_frame(["ECG", "AF7", "PPG_Muse", "PHOTO"]).plot(subplots=True)
-        assert len(others["PPG_Muse"]) == 0  # Make sure no missing values for PPG-Muse
+        rs = load_rs(path, sub)
 
     # HCT ==============================================================================
     # Open HCT file
+    path_eeg = path + sub + "/eeg/"
     file = [file for file in os.listdir(path_eeg) if "HCT" in file]
     file = path_eeg + [f for f in file if ".vhdr" in f][0]
     hct = mne.io.read_raw_brainvision(file, preload=True, verbose=False)
@@ -125,7 +135,17 @@ def load_physio(path, sub):
 
     # Check if MUSE signal interruptions
     _, others = consecutive_nans(hct)
-    if sub in ["sub-03", "sub-04", "sub-11", "sub-12", "sub-13", "sub-70", "sub-103"]:
+    if sub in [
+        "sub-03",
+        "sub-04",
+        "sub-11",
+        "sub-12",
+        "sub-13",
+        "sub-70",
+        "sub-89",
+        "sub-95",
+        "sub-103",
+    ]:
         hct = hct.apply_function(
             nk.signal_fillmissing, picks="PPG_Muse", method="forward"
         )
