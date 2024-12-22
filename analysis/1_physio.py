@@ -34,7 +34,7 @@ def qc_physio(df, info, sub, plot_ecg=[], plot_ppg=[]):
 
     # Add text
     img = ill.image_text(
-        sub, color="black", size=40, x=-0.82, y=0.90, image=nk.fig2img(fig)
+        sub, color="black", size=30, x=-0.82, y=0.90, image=nk.fig2img(fig)
     )
     plt.close(fig)  # Do not show the plot in the console
     plot_ecg.append(img)
@@ -51,7 +51,7 @@ def qc_physio(df, info, sub, plot_ecg=[], plot_ppg=[]):
 
         # Add text
         img = ill.image_text(
-            sub, color="black", size=40, x=-0.82, y=0.90, image=nk.fig2img(fig)
+            sub, color="black", size=30, x=-0.82, y=0.90, image=nk.fig2img(fig)
         )
         plot_ppg.append(img)
         plt.close(fig)
@@ -223,7 +223,7 @@ for i, sub in enumerate(meta["participant_id"].values):
 
 # Clean up and Save data
 df = pd.merge(meta, df)
-df.to_csv("../data/data_participants.csv", index=False)
+df.to_csv("../data/rawdata_participants.csv", index=False)
 
 # Save figures
 ill.image_mosaic(qc["rs_ecg"], ncols=4, nrows="auto").save("signals/rs_ecg.png")
