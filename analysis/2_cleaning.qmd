@@ -128,21 +128,9 @@ select(df, starts_with("HCT")) |>
   make_correlation() 
 ```
 
-### PI-99
-
-```{r}
-select(df, starts_with("PI")) |> 
-  select(-matches("\\d")) |>
-  estimate_density() |> 
-  ggplot(aes(x=x, y=y, color=Parameter)) +
-  geom_line(linewidth=1) +
-  theme_minimal()
-```
 
 
 ### HRV
-
-
 
 ```{r}
 #| code-fold: false
@@ -158,9 +146,21 @@ select(df, starts_with("HRV")) |>
   make_hist(scales="free") 
 ```
 
+
+### PI-99
+
+```{r}
+select(df, starts_with("PI")) |> 
+  select(-matches("\\d")) |>
+  estimate_density() |> 
+  ggplot(aes(x=x, y=y, color=Parameter)) +
+  geom_line(linewidth=1) +
+  theme_minimal()
+```
+
 :::
 
-## Quick Analysis
+## Correlations
 
 
 ```{r}
@@ -181,10 +181,10 @@ make_correlation(
   select(df, starts_with("HRV"))
 )
 
-# make_correlation(
-#   select(df, starts_with("IAS"), starts_with("MAIA"), -matches("\\d")),
-#   select(df, starts_with("PI_"), -matches("\\d"))
-# )
+make_correlation(
+  select(df, starts_with("IAS"), starts_with("MAIA"), -matches("\\d")),
+  select(df, starts_with("PI_"), -matches("\\d"))
+)
 ```
 
 ## Final Sample

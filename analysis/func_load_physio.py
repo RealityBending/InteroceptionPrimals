@@ -31,6 +31,7 @@ def load_physio(path, sub):
 
         rs = mne.io.read_raw_brainvision(file, preload=True)
         rs = rs.set_montage("standard_1020")
+        # rs.to_data_frame().plot(subplots=True)
 
         # Detect onset of RS
         events = nk.events_find(
@@ -53,16 +54,36 @@ def load_physio(path, sub):
         rs = nk.mne_crop(
             rs, smin=events["onset"][0], smax=events["onset"][0] + events["duration"][0]
         )
-        assert (
-            len(rs) / rs.info["sfreq"] / 60 > 6
-        )  # Check duration is at least 6 minutes
 
         # Cut out nans at the beginning due to sync delay
-        if sub in ["sub-24", "sub-38", "sub-65", "sub-68", "sub-76", "sub-105"]:
+        if sub in [
+            "sub-24",
+            "sub-38",
+            "sub-65",
+            "sub-68",
+            "sub-76",
+            "sub-105",
+            "sub-108",
+            "sub-109",
+            "sub-110",
+            "sub-111",
+            "sub-112",
+            "sub-113",
+            "sub-114",
+            "sub-116",
+            "sub-117",
+            "sub-118",
+            "sub-119",
+            "sub-120",
+        ]:
             # rs.to_data_frame()
             first_valid, _ = consecutive_nans(rs)
             rs = nk.mne_crop(rs, smin=first_valid, smax=None)
         assert rs.to_data_frame()["ECG"].isna().sum() == 0
+
+        assert (
+            len(rs) / rs.info["sfreq"] / 60 > 6
+        )  # Check duration is at least 6 minutes
 
         # Check MUSE signal interruptions
         _, others = consecutive_nans(rs)
@@ -79,6 +100,8 @@ def load_physio(path, sub):
             "sub-76",
             "sub-82",
             "sub-95",
+            "sub-117",
+            "sub-119",
         ]:
             rs = rs.apply_function(
                 nk.signal_fillmissing, picks="PPG_Muse", method="forward"
@@ -124,10 +147,11 @@ def load_physio(path, sub):
 
     # Get new start and end of the recording
     start_end = [events["onset"][0], events["onset"][-1] + events["duration"][-1]]
-    if sub in ["sub-13", "sub-68"]:  # Because first onset < 2000
+    if sub in ["sub-13", "sub-68", "sub-111", "sub-114"]:  # Because first onset < 2000
         # hct.to_data_frame()
         first_valid, _ = consecutive_nans(hct)
         start_end[0] = 2000 + first_valid
+    assert start_end[0] > 2000
     hct = nk.mne_crop(hct, smin=start_end[0] - 2000, smax=start_end[1] + 2000)
 
     # Check that there are 6 epochs (the 6 intervals)
@@ -145,6 +169,9 @@ def load_physio(path, sub):
         "sub-89",
         "sub-95",
         "sub-103",
+        "sub-107",
+        "sub-108",
+        "sub-117",
     ]:
         hct = hct.apply_function(
             nk.signal_fillmissing, picks="PPG_Muse", method="forward"
@@ -154,7 +181,7 @@ def load_physio(path, sub):
         try:
             assert len(others["PPG_Muse"]) == 0
         except:
-            hct.to_data_frame(["ECG", "AF7", "PPG_Muse", "PHOTO"]).plot(subplots=True)
+            # hct.to_data_frame(["ECG", "AF7", "PPG_Muse", "PHOTO"]).plot(subplots=True)
             print(sub)
             assert len(others["PPG_Muse"]) == 0
 
