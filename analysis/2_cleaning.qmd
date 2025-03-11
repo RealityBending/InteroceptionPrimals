@@ -120,7 +120,7 @@ select(df, starts_with("IAS"), -matches("\\d$"), -contains("_R")) |>
 
 ```{r}
 select(df, starts_with("HCT")) |> 
-  make_hist() 
+  make_hist(scales="free") 
 ```
 
 ```{r}
@@ -180,9 +180,24 @@ make_correlation(
   select(df, starts_with("HCT")),
   select(df, starts_with("HRV"))
 )
+```
 
+### Primals
+
+
+```{r}
 make_correlation(
   select(df, starts_with("IAS"), starts_with("MAIA"), -matches("\\d")),
+  select(df, starts_with("PI_"), -matches("\\d"))
+)
+
+make_correlation(
+  select(df, starts_with("HCT")),
+  select(df, starts_with("PI_"), -matches("\\d"))
+)
+
+make_correlation(
+  select(df, starts_with("HRV")),
   select(df, starts_with("PI_"), -matches("\\d"))
 )
 ```

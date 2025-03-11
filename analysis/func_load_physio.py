@@ -45,17 +45,21 @@ def load_physio(path, sub):
         # plt.vlines(
         #     [10000, 10000 + rs.info["sfreq"] * 60 * 8], ymin=0, ymax=10, color="red"
         # )
-        if sub in ["sub-57", "sub-80", "sub-91"]:
+        if sub in ["sub-57", "sub-80", "sub-91", "sub-133"]:
             events = {"onset": [10000], "duration": [rs.info["sfreq"] * 60 * 8]}
         if sub in ["sub-93"]:
             events = {"onset": [4600], "duration": [rs.info["sfreq"] * 60 * 8]}
+        if sub in ["sub-129"]:
+            events = {"onset": [15000], "duration": [rs.info["sfreq"] * 60 * 8]}
+        if sub in ["sub-131"]:  # Photosensor reversed?
+            events = {"onset": [6853], "duration": [rs.info["sfreq"] * 60 * 8]}
         assert len(events["onset"]) == 1  # Check that there is only one event
 
         rs = nk.mne_crop(
             rs, smin=events["onset"][0], smax=events["onset"][0] + events["duration"][0]
         )
 
-        # Cut out nans at the beginning due to sync delay
+        # Cut out nans at the beginning due to sync delay (recording started after the task)
         if sub in [
             "sub-24",
             "sub-38",
@@ -75,6 +79,7 @@ def load_physio(path, sub):
             "sub-118",
             "sub-119",
             "sub-120",
+            "sub-147",
         ]:
             # rs.to_data_frame()
             first_valid, _ = consecutive_nans(rs)
@@ -102,87 +107,105 @@ def load_physio(path, sub):
             "sub-95",
             "sub-117",
             "sub-119",
+            "sub-120",
+            "sub-121",
+            "sub-132",
+            "sub-135",
+            "sub-136",
+            "sub-139",
+            "sub-142",
         ]:
             rs = rs.apply_function(
                 nk.signal_fillmissing, picks="PPG_Muse", method="forward"
             )
         else:
+            # Make sure no missing values for PPG-Muse
             # rs.to_data_frame(["ECG", "AF7", "PPG_Muse", "PHOTO"]).plot(subplots=True)
-            assert (
-                len(others["PPG_Muse"]) == 0
-            )  # Make sure no missing values for PPG-Muse
+            assert len(others["PPG_Muse"]) == 0
         return rs
 
+    # Run --------------------------------------------------------------------------------
     if sub in ["sub-86"]:  # No RS file
         rs = None
     else:
         rs = load_rs(path, sub)
 
     # HCT ==============================================================================
-    # Open HCT file
-    path_eeg = path + sub + "/eeg/"
-    file = [file for file in os.listdir(path_eeg) if "HCT" in file]
-    file = path_eeg + [f for f in file if ".vhdr" in f][0]
-    hct = mne.io.read_raw_brainvision(file, preload=True, verbose=False)
+    def load_hct(path, sub):
+        # Open HCT file
+        path_eeg = path + sub + "/eeg/"
+        file = [file for file in os.listdir(path_eeg) if "HCT" in file]
+        file = path_eeg + [f for f in file if ".vhdr" in f][0]
+        hct = mne.io.read_raw_brainvision(file, preload=True, verbose=False)
 
-    # Filter EEG
-    hct = hct.set_montage("standard_1020")
+        # Filter EEG
+        hct = hct.set_montage("standard_1020")
 
-    # Find events and crop just before (1 second +/-) first and after last
-    events = nk.events_find(
-        hct["PHOTO"][0][0], threshold_keep="below", duration_min=15000
-    )
-    # nk.signal_plot(hct["PHOTO"][0][0])
-
-    # Fix manual cases
-    if sub in [
-        "sub-16",
-        "sub-52",
-        "sub-54",
-        "sub-80",
-        "sub-102",
-    ]:  # drop 1 extra even at the end
-        events["onset"] = events["onset"][0:-1]
-        events["duration"] = events["duration"][0:-1]
-
-    # Get new start and end of the recording
-    start_end = [events["onset"][0], events["onset"][-1] + events["duration"][-1]]
-    if sub in ["sub-13", "sub-68", "sub-111", "sub-114"]:  # Because first onset < 2000
-        # hct.to_data_frame()
-        first_valid, _ = consecutive_nans(hct)
-        start_end[0] = 2000 + first_valid
-    assert start_end[0] > 2000
-    hct = nk.mne_crop(hct, smin=start_end[0] - 2000, smax=start_end[1] + 2000)
-
-    # Check that there are 6 epochs (the 6 intervals)
-    assert len(events["onset"]) == 6
-
-    # Check if MUSE signal interruptions
-    _, others = consecutive_nans(hct)
-    if sub in [
-        "sub-03",
-        "sub-04",
-        "sub-11",
-        "sub-12",
-        "sub-13",
-        "sub-70",
-        "sub-89",
-        "sub-95",
-        "sub-103",
-        "sub-107",
-        "sub-108",
-        "sub-117",
-    ]:
-        hct = hct.apply_function(
-            nk.signal_fillmissing, picks="PPG_Muse", method="forward"
+        # Find events and crop just before (1 second +/-) first and after last
+        events = nk.events_find(
+            hct["PHOTO"][0][0], threshold_keep="below", duration_min=15000
         )
+        # nk.signal_plot(hct["PHOTO"][0][0])
+
+        # Fix manual cases
+        if sub in [
+            "sub-16",
+            "sub-52",
+            "sub-54",
+            "sub-80",
+            "sub-102",
+            "sub-130",
+        ]:  # drop 1 extra even at the end
+            events["onset"] = events["onset"][0:-1]
+            events["duration"] = events["duration"][0:-1]
+
+        # Get new start and end of the recording
+        start_end = [events["onset"][0], events["onset"][-1] + events["duration"][-1]]
+        if sub in [
+            "sub-13",
+            "sub-68",
+            "sub-111",
+            "sub-114",
+        ]:  # Because first onset < 2000
+            # hct.to_data_frame()
+            first_valid, _ = consecutive_nans(hct)
+            start_end[0] = 2000 + first_valid
+        assert start_end[0] > 2000
+        hct = nk.mne_crop(hct, smin=start_end[0] - 2000, smax=start_end[1] + 2000)
+
+        # Check that there are 6 epochs (the 6 intervals)
+        assert len(events["onset"]) == 6
+
+        # Check if MUSE signal interruptions
+        _, others = consecutive_nans(hct)
+        if sub in [
+            "sub-03",
+            "sub-04",
+            "sub-11",
+            "sub-12",
+            "sub-13",
+            "sub-70",
+            "sub-89",
+            "sub-95",
+            "sub-103",
+            "sub-107",
+            "sub-108",
+            "sub-117",
+            "sub-128",
+            "sub-142",
+        ]:
+            hct = hct.apply_function(
+                nk.signal_fillmissing, picks="PPG_Muse", method="forward"
+            )
+        else:
+            # Make sure no missing values for PPG-Muse
+            assert len(others["PPG_Muse"]) == 0
+        return hct
+
+    # Run --------------------------------------------------------------------------------
+    if sub in ["sub-146"]:  # No photosensor in HCT
+        hct = None
     else:
-        # Make sure no missing values for PPG-Muse
-        try:
-            assert len(others["PPG_Muse"]) == 0
-        except:
-            # hct.to_data_frame(["ECG", "AF7", "PPG_Muse", "PHOTO"]).plot(subplots=True)
-            print(sub)
-            assert len(others["PPG_Muse"]) == 0
+        hct = load_hct(path, sub)
 
     return rs, hct
